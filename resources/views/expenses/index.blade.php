@@ -69,7 +69,14 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1.5">Type</label>
-                    <input type="text" name="type" value="{{ request('type') }}" placeholder="Type de depense..." class="input-modern">
+                    <select name="type" class="input-modern">
+                        <option value="">Tous les types</option>
+                        <option value="maintenance" {{ request('type') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                        <option value="tax" {{ request('type') == 'tax' ? 'selected' : '' }}>Taxe</option>
+                        <option value="insurance" {{ request('type') == 'insurance' ? 'selected' : '' }}>Assurance</option>
+                        <option value="utilities" {{ request('type') == 'utilities' ? 'selected' : '' }}>Services publics</option>
+                        <option value="other" {{ request('type') == 'other' ? 'selected' : '' }}>Autre</option>
+                    </select>
                 </div>
                 <div class="flex items-end gap-2">
                     <button type="submit" class="btn-primary flex-1">Filtrer</button>
@@ -183,7 +190,14 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1.5">Type <span class="text-red-500">*</span></label>
-                    <input type="text" name="type" required class="input-modern" placeholder="Maintenance, Réparation, Taxe...">
+                    <select name="type" required class="input-modern">
+                        <option value="">Sélectionner un type</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="tax">Taxe</option>
+                        <option value="insurance">Assurance</option>
+                        <option value="utilities">Services publics</option>
+                        <option value="other">Autre</option>
+                    </select>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -265,7 +279,14 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1.5">Type <span class="text-red-500">*</span></label>
-                    <input type="text" name="type" id="ee-type" required class="input-modern" placeholder="Maintenance, Réparation...">
+                    <select name="type" id="ee-type" required class="input-modern">
+                        <option value="">Sélectionner un type</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="tax">Taxe</option>
+                        <option value="insurance">Assurance</option>
+                        <option value="utilities">Services publics</option>
+                        <option value="other">Autre</option>
+                    </select>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
