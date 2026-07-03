@@ -5,194 +5,203 @@
     <title>Rapport Financier</title>
     <style>
         body {
-            font-family: DejaVu Sans, Arial, sans-serif;
+            font-family: DejaVu Sans, sans-serif;
             font-size: 11px;
-            line-height: 1.5;
             color: #000000;
             margin: 0;
-            padding: 18px;
-            background-color: #ffffff;
+            padding: 20px;
         }
-        .header {
+        h1 {
             text-align: center;
-            margin-bottom: 24px;
-            border-bottom: 3px solid #dc2626;
-            padding-bottom: 16px;
-        }
-        .header h1 {
-            margin: 0 0 6px 0;
-            font-size: 22px;
+            font-size: 20px;
+            margin: 0 0 5px 0;
             color: #000000;
         }
-        .header .period {
-            font-size: 13px;
-            color: #333333;
-        }
-        .stats-row {
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-        .stat-card {
-            float: left;
-            width: 16.3%;
-            margin: 0 0.5% 10px 0.5%;
-            border: 1px solid #cbd5e1;
-            padding: 12px;
-            border-radius: 6px;
-            background-color: #ffffff;
-        }
-        .stat-label {
-            font-size: 9px;
-            color: #334155 !important;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .stat-value {
-            font-size: 14px;
-            font-weight: bold;
-            color: #000000 !important;
-        }
-        .stat-value.negative { color: #dc2626 !important; }
-        .stat-value.positive { color: #16a34a !important; }
-        .content-row {
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-        .content-col {
-            float: left;
-            width: 48%;
-            margin: 0 1%;
-        }
-        .section-title {
+        .period {
+            text-align: center;
             font-size: 12px;
-            font-weight: bold;
-            color: #000000;
-            margin: 0 0 10px 0;
-            padding-bottom: 6px;
-            border-bottom: 2px solid #dc2626;
+            color: #333333;
+            margin-bottom: 15px;
+        }
+        .separator {
+            border: none;
+            border-top: 3px solid #dc2626;
+            margin: 10px 0 20px 0;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 16px;
-            font-size: 10px;
+            margin-bottom: 20px;
         }
-        th, td {
+        .stats-table td {
             border: 1px solid #999999;
-            padding: 8px 10px;
-            text-align: left;
+            padding: 10px;
+            text-align: center;
+            width: 16.6%;
+            vertical-align: top;
+        }
+        .stats-table .label {
+            font-size: 8px;
+            color: #333333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        .stats-table .value {
+            font-size: 13px;
+            font-weight: bold;
             color: #000000;
         }
-        th {
-            background-color: #dc2626;
-            color: #ffffff !important;
-            font-weight: 600;
-            font-size: 10px;
+        .stats-table .value-red {
+            font-size: 13px;
+            font-weight: bold;
+            color: #dc2626;
         }
-        tr:nth-child(even) {
-            background-color: #f0f0f0;
+        .stats-table .value-green {
+            font-size: 13px;
+            font-weight: bold;
+            color: #16a34a;
+        }
+        .section-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #000000;
+            margin: 20px 0 8px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #dc2626;
+        }
+        .data-table th {
+            background-color: #dc2626;
+            color: #ffffff;
+            padding: 8px;
+            font-size: 10px;
+            text-align: left;
+            border: 1px solid #dc2626;
+        }
+        .data-table td {
+            padding: 7px 8px;
+            border: 1px solid #cccccc;
+            font-size: 10px;
+            color: #000000;
+        }
+        .data-table tr:nth-child(even) td {
+            background-color: #f5f5f5;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
         }
         .footer {
-            clear: both;
             margin-top: 30px;
-            padding-top: 12px;
+            padding-top: 10px;
             border-top: 1px solid #999999;
             text-align: center;
             font-size: 9px;
             color: #666666;
         }
+        .two-columns {
+            width: 100%;
+        }
+        .two-columns td {
+            width: 50%;
+            vertical-align: top;
+            padding: 0 10px;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>RAPPORT FINANCIER</h1>
-        <p class="period">Période : {{ \Carbon\Carbon::parse($data['period']['start'])->format('d/m/Y') }} — {{ \Carbon\Carbon::parse($data['period']['end'])->format('d/m/Y') }}</p>
-    </div>
+    <h1>RAPPORT FINANCIER</h1>
+    <p class="period">Periode : {{ \Carbon\Carbon::parse($data['period']['start'])->format('d/m/Y') }} &mdash; {{ \Carbon\Carbon::parse($data['period']['end'])->format('d/m/Y') }}</p>
+    <hr class="separator">
 
-    <div class="stats-row">
-        <div class="stat-card">
-            <div class="stat-label">Revenus totaux</div>
-            <div class="stat-value">{{ number_format($data['total_revenue'] ?? 0, 0, ',', ' ') }} FCFA</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Dépenses</div>
-            <div class="stat-value">{{ number_format($data['total_expenses'] ?? 0, 0, ',', ' ') }} FCFA</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Impayés</div>
-            <div class="stat-value negative">{{ number_format($data['overdue_amount'] ?? 0, 0, ',', ' ') }} FCFA</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Paiements reçus</div>
-            <div class="stat-value">{{ $data['total_payments'] ?? 0 }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Taux recouvrement</div>
-            <div class="stat-value">{{ number_format($data['recovery_rate'] ?? 0, 2) }}%</div>
-        </div>
-        @php $netProfit = ($data['total_revenue'] ?? 0) - ($data['total_expenses'] ?? 0); @endphp
-        <div class="stat-card">
-            <div class="stat-label">Bénéfice net</div>
-            <div class="stat-value {{ $netProfit >= 0 ? 'positive' : 'negative' }}">{{ number_format($netProfit, 0, ',', ' ') }} FCFA</div>
-        </div>
-    </div>
+    @php $netProfit = ($data['total_revenue'] ?? 0) - ($data['total_expenses'] ?? 0); @endphp
 
-    <div class="content-row">
-        <div class="content-col">
-            @if(!empty($data['by_property']))
-            <h2 class="section-title">Revenus par bien</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Bien</th>
-                        <th style="text-align:right;">Revenus</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($data['by_property'] as $item)
-                    <tr>
-                        <td>{{ $item['property_address'] }}</td>
-                        <td style="text-align:right;">{{ number_format($item['revenue'], 0, ',', ' ') }} FCFA</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            @else
-            <h2 class="section-title">Revenus par bien</h2>
-            <p>Aucune donnée sur cette période.</p>
-            @endif
-        </div>
-        <div class="content-col">
-            @if(!empty($data['by_payment_method']))
-            <h2 class="section-title">Revenus par méthode de paiement</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Méthode</th>
-                        <th style="text-align:right;">Montant</th>
-                        <th style="text-align:center;">Nb</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($data['by_payment_method'] as $item)
-                    <tr>
-                        <td>{{ ucfirst(str_replace('_', ' ', $item['payment_method'] ?? 'non_specifie')) }}</td>
-                        <td style="text-align:right;">{{ number_format($item['revenue'], 0, ',', ' ') }} FCFA</td>
-                        <td style="text-align:center;">{{ $item['count'] ?? 0 }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            @else
-            <h2 class="section-title">Revenus par méthode de paiement</h2>
-            <p>Aucune donnée sur cette période.</p>
-            @endif
-        </div>
-    </div>
+    <table class="stats-table">
+        <tr>
+            <td>
+                <div class="label">Revenus totaux</div>
+                <div class="value">{{ number_format($data['total_revenue'] ?? 0, 0, ',', ' ') }} FCFA</div>
+            </td>
+            <td>
+                <div class="label">Depenses</div>
+                <div class="value">{{ number_format($data['total_expenses'] ?? 0, 0, ',', ' ') }} FCFA</div>
+            </td>
+            <td>
+                <div class="label">Impayes</div>
+                <div class="value-red">{{ number_format($data['overdue_amount'] ?? 0, 0, ',', ' ') }} FCFA</div>
+            </td>
+            <td>
+                <div class="label">Paiements recus</div>
+                <div class="value">{{ $data['total_payments'] ?? 0 }}</div>
+            </td>
+            <td>
+                <div class="label">Taux recouvrement</div>
+                <div class="value">{{ number_format($data['recovery_rate'] ?? 0, 2) }}%</div>
+            </td>
+            <td>
+                <div class="label">Benefice net</div>
+                <div class="{{ $netProfit >= 0 ? 'value-green' : 'value-red' }}">{{ number_format($netProfit, 0, ',', ' ') }} FCFA</div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="two-columns">
+        <tr>
+            <td>
+                <p class="section-title">Revenus par bien</p>
+                @if(!empty($data['by_property']))
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Bien</th>
+                            <th class="text-right">Revenus</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($data['by_property'] as $item)
+                        <tr>
+                            <td>{{ $item['property_address'] }}</td>
+                            <td class="text-right">{{ number_format($item['revenue'], 0, ',', ' ') }} FCFA</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @else
+                <p>Aucune donnee sur cette periode.</p>
+                @endif
+            </td>
+            <td>
+                <p class="section-title">Revenus par methode de paiement</p>
+                @if(!empty($data['by_payment_method']))
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Methode</th>
+                            <th class="text-right">Montant</th>
+                            <th class="text-center">Nb</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($data['by_payment_method'] as $item)
+                        <tr>
+                            <td>{{ ucfirst(str_replace('_', ' ', $item['payment_method'] ?? 'non specifie')) }}</td>
+                            <td class="text-right">{{ number_format($item['revenue'], 0, ',', ' ') }} FCFA</td>
+                            <td class="text-center">{{ $item['count'] ?? 0 }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @else
+                <p>Aucune donnee sur cette periode.</p>
+                @endif
+            </td>
+        </tr>
+    </table>
 
     <div class="footer">
-        <p>Rapport généré le {{ now()->format('d/m/Y à H:i') }} — Caron - Gestion Immobilière</p>
+        Rapport genere le {{ now()->format('d/m/Y a H:i') }} &mdash; Caron - Gestion Immobiliere
     </div>
 </body>
 </html>
