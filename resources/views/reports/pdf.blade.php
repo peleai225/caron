@@ -8,9 +8,10 @@
             font-family: DejaVu Sans, Arial, sans-serif;
             font-size: 11px;
             line-height: 1.5;
-            color: #1e293b;
+            color: #000000;
             margin: 0;
             padding: 18px;
+            background-color: #ffffff;
         }
         .header {
             text-align: center;
@@ -21,11 +22,11 @@
         .header h1 {
             margin: 0 0 6px 0;
             font-size: 22px;
-            color: #0f172a;
+            color: #000000;
         }
         .header .period {
             font-size: 13px;
-            color: #64748b;
+            color: #333333;
         }
         .stats-row {
             margin-bottom: 20px;
@@ -35,14 +36,14 @@
             float: left;
             width: 16.3%;
             margin: 0 0.5% 10px 0.5%;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #cbd5e1;
             padding: 12px;
             border-radius: 6px;
-            background: #f8fafc;
+            background-color: #ffffff;
         }
         .stat-label {
             font-size: 9px;
-            color: #64748b;
+            color: #334155 !important;
             margin-bottom: 4px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -50,10 +51,10 @@
         .stat-value {
             font-size: 14px;
             font-weight: bold;
-            color: #0f172a;
+            color: #000000 !important;
         }
-        .stat-value.negative { color: #dc2626; }
-        .stat-value.positive { color: #16a34a; }
+        .stat-value.negative { color: #dc2626 !important; }
+        .stat-value.positive { color: #16a34a !important; }
         .content-row {
             overflow: hidden;
             margin-bottom: 20px;
@@ -66,7 +67,7 @@
         .section-title {
             font-size: 12px;
             font-weight: bold;
-            color: #0f172a;
+            color: #000000;
             margin: 0 0 10px 0;
             padding-bottom: 6px;
             border-bottom: 2px solid #dc2626;
@@ -78,27 +79,28 @@
             font-size: 10px;
         }
         th, td {
-            border: 1px solid #e2e8f0;
+            border: 1px solid #999999;
             padding: 8px 10px;
             text-align: left;
+            color: #000000;
         }
         th {
             background-color: #dc2626;
-            color: white;
+            color: #ffffff !important;
             font-weight: 600;
             font-size: 10px;
         }
         tr:nth-child(even) {
-            background-color: #f8fafc;
+            background-color: #f0f0f0;
         }
         .footer {
             clear: both;
             margin-top: 30px;
             padding-top: 12px;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid #999999;
             text-align: center;
             font-size: 9px;
-            color: #94a3b8;
+            color: #666666;
         }
     </style>
 </head>
