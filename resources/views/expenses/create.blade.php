@@ -44,7 +44,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1.5">Montant (FCFA) <span class="text-red-500">*</span></label>
-                        <input type="number" name="amount" value="{{ old('amount') }}" step="0.01" min="0" placeholder="0" class="input-modern">
+                        <input type="number" name="amount" value="{{ old('amount') }}" step="0.01" min="0" placeholder="0" class="input-modern" required>
                         @error('amount') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
@@ -56,7 +56,7 @@
 
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1.5">Description <span class="text-red-500">*</span></label>
-                    <textarea name="description" rows="3" placeholder="Details de la depense..." class="input-modern">{{ old('description') }}</textarea>
+                    <textarea name="description" rows="3" placeholder="Details de la depense..." class="input-modern" required>{{ old('description') }}</textarea>
                     @error('description') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
