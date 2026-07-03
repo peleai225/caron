@@ -81,9 +81,8 @@ class InvoiceController extends Controller
 
         $contract = Contract::where('agency_id', $agencyId)->findOrFail($validated['contract_id']);
 
-        $invoiceNumber = 'FAC-' . now()->format('Y') . '-' . str_pad(
-            Invoice::whereYear('created_at', now()->year)->count() + 1, 5, '0', STR_PAD_LEFT
-        );
+        $lastInvoice = Invoice::whereYear('created_at', now()->year)->max('id') ?? 0;
+        $invoiceNumber = 'FAC-' . now()->format('Y') . '-' . str_pad($lastInvoice + 1, 5, '0', STR_PAD_LEFT);
 
         $invoice = Invoice::create([
             'contract_id' => $validated['contract_id'],
@@ -94,7 +93,7 @@ class InvoiceController extends Controller
             'issue_date' => $validated['issue_date'],
             'due_date' => $validated['due_date'],
             'description' => $validated['description'] ?? '',
-            'status' => 'pending',
+            'status' => 'draft',
         ]);
 
         return redirect()->route('invoices.show', $invoice)
