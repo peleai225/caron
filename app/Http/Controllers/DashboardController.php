@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\PaymentSchedule;
 use App\Models\Owner;
 use App\Models\Expense;
+use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -85,7 +86,13 @@ class DashboardController extends Controller
                 'overdue_amount' => PaymentSchedule::whereHas('contract', function ($q) use ($agencyId) {
                     $q->where('agency_id', $agencyId);
                 })->overdue()->sum('amount'),
-                'agency_commissions' => 0,
+                'agency_commissions' => Invoice::where('invoice_type', 'commission')
+                    ->whereHas('contract', function ($q) use ($agencyId) {
+                        $q->where('agency_id', $agencyId);
+                    })
+                    ->whereMonth('issue_date', now()->month)
+                    ->whereYear('issue_date', now()->year)
+                    ->sum('amount'),
             ];
         });
 

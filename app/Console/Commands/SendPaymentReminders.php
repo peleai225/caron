@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\SendPaymentReminderJob;
 use App\Models\PaymentSchedule;
 use App\Services\NotificationService;
 use Illuminate\Console\Command;
@@ -27,14 +28,10 @@ class SendPaymentReminders extends Command
             ->get();
 
         foreach ($upcoming as $schedule) {
-            try {
-                $this->notificationService->sendPaymentReminder($schedule);
-            } catch (\Throwable $e) {
-                $this->error("Échéance {$schedule->id} : " . $e->getMessage());
-            }
+            SendPaymentReminderJob::dispatch($schedule);
         }
 
-        $this->info("Rappels J-{$days} : {$upcoming->count()} envoyé(s).");
+        $this->info("Rappels J-{$days} : {$upcoming->count()} job(s) dispatché(s).");
 
         // 2. Relances retards (échéances dépassées non payées)
         $overdue = PaymentSchedule::with(['contract.tenant', 'contract.property', 'contract.agency'])
@@ -42,14 +39,10 @@ class SendPaymentReminders extends Command
             ->get();
 
         foreach ($overdue as $schedule) {
-            try {
-                $this->notificationService->sendPaymentReminder($schedule);
-            } catch (\Throwable $e) {
-                $this->error("Retard échéance {$schedule->id} : " . $e->getMessage());
-            }
+            SendPaymentReminderJob::dispatch($schedule);
         }
 
-        $this->info("Relances retard : {$overdue->count()} traité(s).");
+        $this->info("Relances retard : {$overdue->count()} job(s) dispatché(s).");
 
         return self::SUCCESS;
     }

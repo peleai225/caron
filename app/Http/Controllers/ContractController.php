@@ -87,6 +87,9 @@ class ContractController extends Controller
         $property = Property::find($validated['property_id']);
         $property->update(['status' => 'occupe']);
 
+        // Invalider le cache dashboard
+        $this->forgetDashboardCache($validated['agency_id']);
+
         return redirect()->route('contracts.show', $contract)
             ->with('success', 'Contrat créé avec succès.');
     }
@@ -140,6 +143,9 @@ class ContractController extends Controller
             }
         }
 
+        // Invalider le cache dashboard
+        $this->forgetDashboardCache($contract->agency_id);
+
         return redirect()->route('contracts.show', $contract)
             ->with('success', 'Contrat mis à jour avec succès.');
     }
@@ -148,6 +154,7 @@ class ContractController extends Controller
     {
         $this->authorizeAgency($contract->agency_id);
 
+        $agencyId = $contract->agency_id;
         $property = $contract->property;
         $contract->delete();
 
@@ -155,6 +162,9 @@ class ContractController extends Controller
         if ($property && !$property->contracts()->whereIn('status', ['draft', 'active'])->exists()) {
             $property->update(['status' => 'libre']);
         }
+
+        // Invalider le cache dashboard
+        $this->forgetDashboardCache($agencyId);
 
         return redirect()->route('contracts.index')
             ->with('success', 'Contrat supprimé avec succès.');

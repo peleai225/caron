@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SendNotificationEmailJob;
 use App\Models\Notification;
 use App\Models\User;
 use App\Models\Contract;
@@ -82,15 +83,17 @@ class NotificationService
     }
 
     /**
-     * Envoie une notification par email
+     * Envoie une notification par email (asynchrone via queue)
      */
     public function sendEmailNotification(User $user, string $subject, string $message, string $template = 'notification'): void
     {
-        try {
-            Mail::to($user->email)->send(new \App\Mail\NotificationMail($subject, $message, $template));
-        } catch (\Exception $e) {
-            \Log::error('Erreur envoi email', ['error' => $e->getMessage()]);
-        }
+        SendNotificationEmailJob::dispatch(
+            $user->email,
+            $user->name ?? '',
+            $subject,
+            $message,
+            $template,
+        );
     }
 
     /**

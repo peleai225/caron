@@ -2,8 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Cache;
+
 abstract class Controller
 {
+    /**
+     * Invalide toutes les clés de cache du dashboard pour une agence donnée.
+     */
+    protected function forgetDashboardCache(?int $agencyId): void
+    {
+        if ($agencyId) {
+            $prefix = 'dashboard_agency_' . $agencyId;
+            Cache::forget($prefix . '_stats');
+            Cache::forget($prefix . '_recent_payments');
+            Cache::forget($prefix . '_expiring_contracts');
+            Cache::forget($prefix . '_active_properties');
+            Cache::forget($prefix . '_available_properties');
+        }
+
+        // Le dashboard super_admin agrège toutes les agences
+        Cache::forget('super_admin_dashboard');
+    }
     protected function getAgencyId(): ?int
     {
         return auth()->user()?->agency_id;

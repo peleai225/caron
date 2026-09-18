@@ -169,6 +169,9 @@ class PaymentController extends Controller
         $validated['status'] = 'completed';
         $payment = $this->paymentService->recordPayment($validated);
 
+        // Invalider le cache dashboard
+        $this->forgetDashboardCache($payment->contract->agency_id ?? null);
+
         // Notification multi-canal
         $this->notificationService->notifyPaymentReceived($payment);
 
@@ -219,6 +222,9 @@ class PaymentController extends Controller
 
         $payment->update($validated);
 
+        // Invalider le cache dashboard
+        $this->forgetDashboardCache(optional($payment->contract)->agency_id);
+
         return redirect()->route('rents.show', $payment)
             ->with('success', 'Paiement mis à jour avec succès.');
     }
@@ -226,6 +232,8 @@ class PaymentController extends Controller
     public function destroy(Payment $payment)
     {
         $this->authorizeAgency(optional($payment->contract)->agency_id);
+
+        $agencyId = optional($payment->contract)->agency_id;
 
         // Supprimer la quittance associée
         if ($payment->receipt) {
@@ -241,6 +249,9 @@ class PaymentController extends Controller
         }
 
         $payment->delete();
+
+        // Invalider le cache dashboard
+        $this->forgetDashboardCache($agencyId);
 
         return redirect()->route('rents.index')
             ->with('success', 'Paiement supprimé avec succès.');

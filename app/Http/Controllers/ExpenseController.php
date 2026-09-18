@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Expense;
 use App\Models\Property;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class ExpenseController extends Controller
@@ -86,6 +87,9 @@ class ExpenseController extends Controller
 
         $expense = Expense::create($validated);
 
+        // Invalider le cache dashboard
+        $this->forgetDashboardCache($validated['agency_id']);
+
         return redirect()->route('expenses.index')
             ->with('success', 'Dépense enregistrée avec succès.');
     }
@@ -128,6 +132,9 @@ class ExpenseController extends Controller
 
         $expense->update($validated);
 
+        // Invalider le cache dashboard
+        $this->forgetDashboardCache($expense->agency_id);
+
         return redirect()->route('expenses.index')
             ->with('success', 'Dépense mise à jour avec succès.');
     }
@@ -136,11 +143,16 @@ class ExpenseController extends Controller
     {
         $this->authorizeAgency($expense->agency_id);
 
+        $agencyId = $expense->agency_id;
+
         if ($expense->receipt_path) {
             Storage::disk('public')->delete($expense->receipt_path);
         }
 
         $expense->delete();
+
+        // Invalider le cache dashboard
+        $this->forgetDashboardCache($agencyId);
 
         return redirect()->route('expenses.index')
             ->with('success', 'Dépense supprimée avec succès.');
