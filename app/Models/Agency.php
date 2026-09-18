@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
 class Agency extends Model
 {
-    use LogsActivity;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'name',
@@ -69,6 +71,16 @@ class Agency extends Model
     public function contractTemplates(): HasMany
     {
         return $this->hasMany(ContractTemplate::class);
+    }
+
+    public function litiges(): HasMany
+    {
+        return $this->hasMany(Litige::class);
+    }
+
+    public function etatDesLieux(): HasManyThrough
+    {
+        return $this->hasManyThrough(EtatDesLieux::class, Property::class);
     }
 
     // Activity Log
