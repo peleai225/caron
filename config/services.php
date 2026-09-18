@@ -38,6 +38,7 @@ return [
     'moneyfusion' => [
         'api_key' => env('MONEYFUSION_API_KEY'),
         'api_url' => env('MONEYFUSION_API_URL'),
+        'webhook_secret' => env('MONEYFUSION_WEBHOOK_SECRET'),
     ],
 
     'cynetpay' => [

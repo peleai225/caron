@@ -129,10 +129,37 @@ class MoneyFusionController extends Controller
     }
 
     /**
-     * Webhook POST reçu de MoneyFusion (sans auth, vérification par token en DB).
+     * Webhook POST reçu de MoneyFusion (vérifié par signature HMAC-SHA256).
      */
     public function webhook(Request $request)
     {
+        // Vérification de la signature HMAC-SHA256
+        $secret = config('services.moneyfusion.webhook_secret');
+
+        if ($secret) {
+            $signature = $request->header('X-Webhook-Signature');
+
+            if (! $signature) {
+                Log::warning('MoneyFusion webhook: signature manquante', [
+                    'ip' => $request->ip(),
+                ]);
+
+                return response()->json(['ok' => false, 'message' => 'Signature manquante'], 403);
+            }
+
+            $payload = $request->getContent();
+            $expected = hash_hmac('sha256', $payload, $secret);
+
+            if (! hash_equals($expected, $signature)) {
+                Log::warning('MoneyFusion webhook: signature invalide', [
+                    'ip'        => $request->ip(),
+                    'signature' => $signature,
+                ]);
+
+                return response()->json(['ok' => false, 'message' => 'Signature invalide'], 403);
+            }
+        }
+
         $data = $request->all();
 
         Log::info('MoneyFusion webhook reçu', $data);

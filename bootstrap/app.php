@@ -11,6 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Exclure les webhooks de paiement de la vérification CSRF
+        $middleware->validateCsrfTokens(except: [
+            'moneyfusion/webhook',
+        ]);
+
         // Enregistrer les middlewares personnalisés
         $middleware->alias([
             'role.owner' => \App\Http\Middleware\EnsureOwnerRole::class,
