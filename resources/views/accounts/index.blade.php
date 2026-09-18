@@ -108,6 +108,11 @@
             </div>
             @endforeach
         </div>
+        @if($accounts->hasPages())
+        <div class="mt-4">
+            {{ $accounts->links() }}
+        </div>
+        @endif
     @else
         <div class="card-panel">
             <div class="card-panel-body text-center py-12">
