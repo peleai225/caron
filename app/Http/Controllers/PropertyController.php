@@ -183,7 +183,27 @@ class PropertyController extends Controller
     public function destroy(Property $property)
     {
         $this->authorizeAgency($property->agency_id);
-        
+
+        // Vérifier les contrats actifs
+        $activeContracts = $property->contracts()->where('status', 'active')->count();
+        if ($activeContracts > 0) {
+            return redirect()->back()->with('error', 'Impossible de supprimer ce bien : ' . $activeContracts . ' contrat(s) actif(s) lui sont associés.');
+        }
+
+        // Vérifier les paiements en attente via les contrats
+        $pendingPayments = \App\Models\Payment::whereIn('contract_id', $property->contracts()->pluck('id'))
+            ->where('status', 'pending')
+            ->count();
+        if ($pendingPayments > 0) {
+            return redirect()->back()->with('error', 'Impossible de supprimer ce bien : ' . $pendingPayments . ' paiement(s) en attente sont liés à ses contrats.');
+        }
+
+        // Vérifier les unités (sous-biens) pour un immeuble
+        $unitsCount = $property->units()->count();
+        if ($unitsCount > 0) {
+            return redirect()->back()->with('error', 'Impossible de supprimer cet immeuble : ' . $unitsCount . ' unité(s) lui sont rattachées. Veuillez d\'abord supprimer les unités.');
+        }
+
         // Supprimer les images
         foreach ($property->images as $image) {
             Storage::disk('public')->delete($image->path);

@@ -87,6 +87,26 @@ class OwnerController extends Controller
     {
         $this->authorizeAgency($owner->agency_id);
 
+        // Vérifier les contrats actifs
+        $activeContracts = $owner->contracts()->where('status', 'active')->count();
+        if ($activeContracts > 0) {
+            return redirect()->back()->with('error', 'Impossible de supprimer ce propriétaire : ' . $activeContracts . ' contrat(s) actif(s) lui sont associés.');
+        }
+
+        // Vérifier les paiements en attente via les contrats
+        $pendingPayments = \App\Models\Payment::whereIn('contract_id', $owner->contracts()->pluck('id'))
+            ->where('status', 'pending')
+            ->count();
+        if ($pendingPayments > 0) {
+            return redirect()->back()->with('error', 'Impossible de supprimer ce propriétaire : ' . $pendingPayments . ' paiement(s) en attente sont liés à ses contrats.');
+        }
+
+        // Vérifier les biens immobiliers associés
+        $propertiesCount = $owner->properties()->count();
+        if ($propertiesCount > 0) {
+            return redirect()->back()->with('error', 'Impossible de supprimer ce propriétaire : ' . $propertiesCount . ' bien(s) immobilier(s) lui sont associés. Veuillez d\'abord réaffecter ou supprimer ces biens.');
+        }
+
         $owner->delete();
         return redirect()->route('owners.index')
             ->with('success', 'Propriétaire supprimé avec succès.');

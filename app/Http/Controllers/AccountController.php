@@ -14,7 +14,7 @@ class AccountController extends Controller
         $accounts = Account::where('agency_id', $agencyId)
             ->with('transactions')
             ->latest()
-            ->get();
+            ->paginate(15);
 
         // Statistiques
         $stats = [
@@ -97,9 +97,23 @@ class AccountController extends Controller
     {
         abort_if($account->agency_id !== $this->getAgencyId(), 403);
 
+        // Vérifier les transactions en attente
+        $pendingTransactions = $account->transactions()->where('status', 'pending')->count();
+        if ($pendingTransactions > 0) {
+            return redirect()->back()
+                ->with('error', 'Impossible de supprimer ce compte : ' . $pendingTransactions . ' transaction(s) en attente sont associées.');
+        }
+
+        // Vérifier si le compte a un solde non nul
+        if ((float) $account->balance !== 0.0) {
+            return redirect()->back()
+                ->with('error', 'Impossible de supprimer ce compte : le solde n\'est pas nul (' . number_format($account->balance, 0, ',', ' ') . ' FCFA). Veuillez d\'abord solder le compte.');
+        }
+
+        // Vérifier s'il y a des transactions existantes
         if ($account->transactions()->count() > 0) {
             return redirect()->back()
-                ->with('error', 'Impossible de supprimer un compte avec des transactions.');
+                ->with('error', 'Impossible de supprimer ce compte : des transactions y sont enregistrées.');
         }
 
         $account->delete();

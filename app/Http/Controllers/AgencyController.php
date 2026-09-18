@@ -126,6 +126,36 @@ class AgencyController extends Controller
      */
     public function destroy(Agency $agency)
     {
+        // Vérifier les contrats actifs
+        $activeContracts = $agency->contracts()->where('status', 'active')->count();
+        if ($activeContracts > 0) {
+            return redirect()->back()->with('error', 'Impossible de supprimer cette agence : ' . $activeContracts . ' contrat(s) actif(s) sont en cours.');
+        }
+
+        // Vérifier les locataires actifs
+        $activeTenants = $agency->tenants()->where('status', 'actif')->count();
+        if ($activeTenants > 0) {
+            return redirect()->back()->with('error', 'Impossible de supprimer cette agence : ' . $activeTenants . ' locataire(s) actif(s) sont enregistrés.');
+        }
+
+        // Vérifier les biens immobiliers
+        $propertiesCount = $agency->properties()->count();
+        if ($propertiesCount > 0) {
+            return redirect()->back()->with('error', 'Impossible de supprimer cette agence : ' . $propertiesCount . ' bien(s) immobilier(s) sont enregistrés. Veuillez d\'abord les supprimer.');
+        }
+
+        // Vérifier les propriétaires
+        $ownersCount = $agency->owners()->count();
+        if ($ownersCount > 0) {
+            return redirect()->back()->with('error', 'Impossible de supprimer cette agence : ' . $ownersCount . ' propriétaire(s) sont enregistrés. Veuillez d\'abord les supprimer.');
+        }
+
+        // Vérifier les comptes avec solde
+        $accountsWithBalance = $agency->accounts()->where('balance', '!=', 0)->count();
+        if ($accountsWithBalance > 0) {
+            return redirect()->back()->with('error', 'Impossible de supprimer cette agence : ' . $accountsWithBalance . ' compte(s) ont un solde non nul.');
+        }
+
         // Supprimer le logo
         if ($agency->logo_path && Storage::disk('public')->exists($agency->logo_path)) {
             Storage::disk('public')->delete($agency->logo_path);

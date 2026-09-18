@@ -114,7 +114,21 @@ class TenantController extends Controller
     public function destroy(Tenant $tenant)
     {
         $this->authorizeAgency($tenant->agency_id);
-        
+
+        // Vérifier les contrats actifs
+        $activeContracts = $tenant->contracts()->where('status', 'active')->count();
+        if ($activeContracts > 0) {
+            return redirect()->back()->with('error', 'Impossible de supprimer ce locataire : ' . $activeContracts . ' contrat(s) actif(s) lui sont associés.');
+        }
+
+        // Vérifier les paiements en attente via les contrats
+        $pendingPayments = \App\Models\Payment::whereIn('contract_id', $tenant->contracts()->pluck('id'))
+            ->where('status', 'pending')
+            ->count();
+        if ($pendingPayments > 0) {
+            return redirect()->back()->with('error', 'Impossible de supprimer ce locataire : ' . $pendingPayments . ' paiement(s) en attente sont liés à ses contrats.');
+        }
+
         // Supprimer les documents
         foreach ($tenant->documents as $document) {
             Storage::disk('public')->delete($document->path);
