@@ -74,11 +74,11 @@ class PaymentService
     /**
      * Enregistre un paiement
      */
-    public function recordPayment(array $data): Payment
+    public function recordPayment(array $data, bool $generateReceipt = true): Payment
     {
-        return DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data, $generateReceipt) {
             $payment = Payment::create($data);
-            
+
             // Mettre à jour l'échéancier
             if ($payment->payment_schedule_id) {
                 $schedule = PaymentSchedule::find($payment->payment_schedule_id);
@@ -87,11 +87,11 @@ class PaymentService
                     'paid_at' => now(),
                 ]);
             }
-            
-            // Générer la quittance
-            $this->generateReceipt($payment);
 
-            // Générer la facture de commission si commission définie
+            if ($generateReceipt) {
+                $this->generateReceipt($payment);
+            }
+
             $this->generateCommissionInvoice($payment);
 
             return $payment;

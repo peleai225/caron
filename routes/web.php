@@ -72,6 +72,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/contracts/{contract}/sign', [ContractController::class, 'sign'])->name('contracts.sign');
         
         // Payments (Rents)
+        Route::get('/rents/search-tenants', [PaymentController::class, 'searchTenants'])->name('rents.search-tenants');
         Route::resource('rents', PaymentController::class);
         Route::get('/rents/{payment}/receipt', [PaymentController::class, 'downloadReceipt'])->name('rents.receipt');
         
@@ -150,10 +151,12 @@ Route::middleware('auth')->group(function () {
 
     });
     
-    // Reports - Accessible aux admins et propriétaires
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/export/excel', [ReportController::class, 'exportExcel'])->name('reports.export.excel');
-    Route::get('/reports/export/pdf', [ReportController::class, 'exportPDF'])->name('reports.export.pdf');
+    // Reports - Accessible aux admins, gestionnaires, propriétaires et comptables
+    Route::middleware('role:super_admin|admin_agence|gestionnaire|proprietaire|comptable')->group(function () {
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/export/excel', [ReportController::class, 'exportExcel'])->name('reports.export.excel');
+        Route::get('/reports/export/pdf', [ReportController::class, 'exportPDF'])->name('reports.export.pdf');
+    });
     
     // Owner Dashboard - Accès réservé aux propriétaires
     Route::prefix('owner')->name('owner.')->middleware('role.owner')->group(function () {
