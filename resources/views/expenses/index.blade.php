@@ -192,11 +192,9 @@
                     <label class="block text-xs font-medium text-slate-600 mb-1.5">Type <span class="text-red-500">*</span></label>
                     <select name="type" required class="input-modern">
                         <option value="">Sélectionner un type</option>
-                        <option value="maintenance">Maintenance</option>
-                        <option value="tax">Taxe</option>
-                        <option value="insurance">Assurance</option>
-                        <option value="utilities">Services publics</option>
-                        <option value="other">Autre</option>
+                        @foreach(\App\Models\Expense::expenseTypes() as $value => $label)
+                            <option value="{{ $value }}">{{ $label }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -281,11 +279,9 @@
                     <label class="block text-xs font-medium text-slate-600 mb-1.5">Type <span class="text-red-500">*</span></label>
                     <select name="type" id="ee-type" required class="input-modern">
                         <option value="">Sélectionner un type</option>
-                        <option value="maintenance">Maintenance</option>
-                        <option value="tax">Taxe</option>
-                        <option value="insurance">Assurance</option>
-                        <option value="utilities">Services publics</option>
-                        <option value="other">Autre</option>
+                        @foreach(\App\Models\Expense::expenseTypes() as $value => $label)
+                            <option value="{{ $value }}">{{ $label }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="grid grid-cols-2 gap-3">

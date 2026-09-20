@@ -32,11 +32,9 @@
                     <label class="block text-xs font-medium text-slate-600 mb-1.5">Type de depense <span class="text-red-500">*</span></label>
                     <select name="type" class="input-modern" required>
                         <option value="">Sélectionner un type</option>
-                        <option value="maintenance" {{ old('type') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                        <option value="tax" {{ old('type') == 'tax' ? 'selected' : '' }}>Taxe</option>
-                        <option value="insurance" {{ old('type') == 'insurance' ? 'selected' : '' }}>Assurance</option>
-                        <option value="utilities" {{ old('type') == 'utilities' ? 'selected' : '' }}>Services publics</option>
-                        <option value="other" {{ old('type') == 'other' ? 'selected' : '' }}>Autre</option>
+                        @foreach(\App\Models\Expense::expenseTypes() as $value => $label)
+                            <option value="{{ $value }}" {{ old('type') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
                     </select>
                     @error('type') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>

@@ -72,7 +72,7 @@ class ExpenseController extends Controller
     {
         $validated = $request->validate([
             'property_id' => 'nullable|exists:properties,id',
-            'type' => 'required|in:maintenance,tax,insurance,utilities,other',
+            'type' => 'required|in:' . implode(',', array_keys(\App\Models\Expense::expenseTypes())),
             'amount' => 'required|numeric|min:0',
             'description' => 'required|string',
             'expense_date' => 'required|date',
@@ -116,7 +116,7 @@ class ExpenseController extends Controller
         abort_if($expense->agency_id !== $this->requireAgencyId(), 403);
         $validated = $request->validate([
             'property_id' => 'nullable|exists:properties,id',
-            'type' => 'required|in:maintenance,tax,insurance,utilities,other',
+            'type' => 'required|in:' . implode(',', array_keys(\App\Models\Expense::expenseTypes())),
             'amount' => 'required|numeric|min:0',
             'description' => 'required|string',
             'expense_date' => 'required|date',
