@@ -37,7 +37,6 @@
             border: 1px solid #999999;
             padding: 10px;
             text-align: center;
-            width: 16.6%;
             vertical-align: top;
         }
         .stats-table .label {
@@ -61,6 +60,11 @@
             font-size: 13px;
             font-weight: bold;
             color: #16a34a;
+        }
+        .stats-table .value-amber {
+            font-size: 13px;
+            font-weight: bold;
+            color: #d97706;
         }
         .section-title {
             font-size: 13px;
@@ -113,7 +117,7 @@
 </head>
 <body>
     <h1>RAPPORT FINANCIER</h1>
-    <p class="period">Periode : {{ \Carbon\Carbon::parse($data['period']['start'])->format('d/m/Y') }} &mdash; {{ \Carbon\Carbon::parse($data['period']['end'])->format('d/m/Y') }}</p>
+    <p class="period">Période : {{ \Carbon\Carbon::parse($data['period']['start'])->format('d/m/Y') }} &mdash; {{ \Carbon\Carbon::parse($data['period']['end'])->format('d/m/Y') }}</p>
     <hr class="separator">
 
     @php $netProfit = ($data['total_revenue'] ?? 0) - ($data['total_expenses'] ?? 0); @endphp
@@ -125,23 +129,27 @@
                 <div class="value">{{ number_format($data['total_revenue'] ?? 0, 0, ',', ' ') }} FCFA</div>
             </td>
             <td>
-                <div class="label">Depenses</div>
+                <div class="label">Dépenses</div>
                 <div class="value">{{ number_format($data['total_expenses'] ?? 0, 0, ',', ' ') }} FCFA</div>
             </td>
             <td>
-                <div class="label">Impayes</div>
+                <div class="label">Impayés</div>
                 <div class="value-red">{{ number_format($data['overdue_amount'] ?? 0, 0, ',', ' ') }} FCFA</div>
             </td>
             <td>
-                <div class="label">Paiements recus</div>
+                <div class="label">Pénalités</div>
+                <div class="value-amber">{{ number_format($data['total_penalties'] ?? 0, 0, ',', ' ') }} FCFA</div>
+            </td>
+            <td>
+                <div class="label">Paiements reçus</div>
                 <div class="value">{{ $data['total_payments'] ?? 0 }}</div>
             </td>
             <td>
-                <div class="label">Taux recouvrement</div>
+                <div class="label">Taux de recouvrement</div>
                 <div class="value">{{ number_format($data['recovery_rate'] ?? 0, 2) }}%</div>
             </td>
             <td>
-                <div class="label">Benefice net</div>
+                <div class="label">Bénéfice net</div>
                 <div class="{{ $netProfit >= 0 ? 'value-green' : 'value-red' }}">{{ number_format($netProfit, 0, ',', ' ') }} FCFA</div>
             </td>
         </tr>
@@ -169,16 +177,16 @@
                     </tbody>
                 </table>
                 @else
-                <p>Aucune donnee sur cette periode.</p>
+                <p>Aucune donnée sur cette période.</p>
                 @endif
             </td>
             <td>
-                <p class="section-title">Revenus par methode de paiement</p>
+                <p class="section-title">Revenus par méthode de paiement</p>
                 @if(!empty($data['by_payment_method']))
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Methode</th>
+                            <th>Méthode</th>
                             <th class="text-right">Montant</th>
                             <th class="text-center">Nb</th>
                         </tr>
@@ -186,7 +194,7 @@
                     <tbody>
                         @foreach($data['by_payment_method'] as $item)
                         <tr>
-                            <td>{{ ucfirst(str_replace('_', ' ', $item['payment_method'] ?? 'non specifie')) }}</td>
+                            <td>{{ ucfirst(str_replace('_', ' ', $item['payment_method'] ?? 'non spécifié')) }}</td>
                             <td class="text-right">{{ number_format($item['revenue'], 0, ',', ' ') }} FCFA</td>
                             <td class="text-center">{{ $item['count'] ?? 0 }}</td>
                         </tr>
@@ -194,14 +202,14 @@
                     </tbody>
                 </table>
                 @else
-                <p>Aucune donnee sur cette periode.</p>
+                <p>Aucune donnée sur cette période.</p>
                 @endif
             </td>
         </tr>
     </table>
 
     <div class="footer">
-        Rapport genere le {{ now()->format('d/m/Y a H:i') }} &mdash; Caron - Gestion Immobiliere
+        Rapport généré le {{ now()->format('d/m/Y à H:i') }} &mdash; Caron - Gestion Immobilière
     </div>
 </body>
 </html>

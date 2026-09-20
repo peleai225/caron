@@ -12,10 +12,6 @@ use Illuminate\Support\Facades\DB;
 
 class ReportService
 {
-    /**
-     * Génère un rapport financier
-     * @param int|null $ownerId Si fourni (propriétaire), filtre par les biens de ce propriétaire uniquement
-     */
     public function generateFinancialReport(?int $agencyId, Carbon $startDate, Carbon $endDate, ?int $ownerId = null): array
     {
         if (!$agencyId && !$ownerId) {
@@ -43,6 +39,7 @@ class ReportService
 
         $overdueAmount = PaymentSchedule::whereHas('contract', $baseContract)
             ->overdue()
+            ->whereBetween('due_date', [$startDate, $endDate])
             ->sum('amount');
 
         $expenseQuery = Expense::whereBetween('expense_date', [$startDate, $endDate]);
@@ -61,10 +58,13 @@ class ReportService
 
         $pendingPayments = Payment::whereHas('contract', $baseContract)
             ->where('status', 'pending')
+            ->where('period', '>=', $startDate->format('Y-m'))
+            ->where('period', '<=', $endDate->format('Y-m'))
             ->count();
 
         $overduePaymentsCount = PaymentSchedule::whereHas('contract', $baseContract)
             ->overdue()
+            ->whereBetween('due_date', [$startDate, $endDate])
             ->count();
 
         $propertyQuery = $ownerId
@@ -120,9 +120,6 @@ class ReportService
         ];
     }
 
-    /**
-     * Calcule le taux de recouvrement
-     */
     private function calculateRecoveryRate(?int $agencyId, Carbon $startDate, Carbon $endDate, ?int $ownerId = null): float
     {
         $contractFilter = function ($query) use ($agencyId, $ownerId) {
@@ -130,24 +127,21 @@ class ReportService
             if ($ownerId) $query->whereHas('property', fn ($pq) => $pq->where('owner_id', $ownerId));
         };
         $expected = PaymentSchedule::whereHas('contract', $contractFilter)
-        ->whereBetween('due_date', [$startDate, $endDate])
-        ->sum('amount');
+            ->whereBetween('due_date', [$startDate, $endDate])
+            ->sum('amount');
 
         $received = Payment::whereHas('contract', $contractFilter)
-        ->whereBetween('payment_date', [$startDate, $endDate])
-        ->where('status', 'completed')
-        ->sum('amount');
+            ->whereBetween('payment_date', [$startDate, $endDate])
+            ->where('status', 'completed')
+            ->sum('amount');
 
         if ($expected == 0) {
             return 0;
         }
 
-        return ($received / $expected) * 100;
+        return round(($received / $expected) * 100, 2);
     }
 
-    /**
-     * Revenus par bien
-     */
     private function getRevenueByProperty(?int $agencyId, Carbon $startDate, Carbon $endDate, ?int $ownerId = null): array
     {
         $query = Payment::join('contracts', 'payments.contract_id', '=', 'contracts.id')
@@ -178,9 +172,6 @@ class ReportService
             ->toArray();
     }
 
-    /**
-     * Revenus par méthode de paiement
-     */
     private function getRevenueByPaymentMethod(?int $agencyId, Carbon $startDate, Carbon $endDate, ?int $ownerId = null): array
     {
         $contractFilter = function ($query) use ($agencyId, $ownerId) {
@@ -188,53 +179,53 @@ class ReportService
             if ($ownerId) $query->whereHas('property', fn ($pq) => $pq->where('owner_id', $ownerId));
         };
         return Payment::whereHas('contract', $contractFilter)
-        ->whereNotNull('payment_date')
-        ->whereBetween('payment_date', [$startDate, $endDate])
-        ->where('status', 'completed')
-        ->select('payment_method', DB::raw('SUM(amount + COALESCE(charges_amount, 0)) as revenue'), DB::raw('COUNT(*) as count'))
-        ->groupBy('payment_method')
-        ->get()
-        ->toArray();
+            ->whereNotNull('payment_date')
+            ->whereBetween('payment_date', [$startDate, $endDate])
+            ->where('status', 'completed')
+            ->select('payment_method', DB::raw('SUM(amount + COALESCE(charges_amount, 0)) as revenue'), DB::raw('COUNT(*) as count'))
+            ->groupBy('payment_method')
+            ->get()
+            ->toArray();
     }
 
-    /**
-     * Export vers Excel avec PhpSpreadsheet
-     */
     public function exportToExcel(array $data, string $filename): string
     {
         try {
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
+            $fcfaFormat = '#,##0" FCFA"';
 
-            // En-tête
             $sheet->setCellValue('A1', 'Rapport Financier');
             $sheet->mergeCells('A1:D1');
             $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
 
-            // Informations générales
             $row = 3;
             $sheet->setCellValue('A' . $row, 'Période:');
             $sheet->setCellValue('B' . $row, $data['period']['start'] . ' - ' . $data['period']['end']);
             $row++;
             $sheet->setCellValue('A' . $row, 'Revenus totaux:');
-            $sheet->setCellValue('B' . $row, number_format($data['total_revenue'], 0, ',', ' ') . ' FCFA');
+            $sheet->setCellValue('B' . $row, $data['total_revenue']);
+            $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode($fcfaFormat);
             $row++;
             $sheet->setCellValue('A' . $row, 'Pénalités:');
-            $sheet->setCellValue('B' . $row, number_format($data['total_penalties'], 0, ',', ' ') . ' FCFA');
+            $sheet->setCellValue('B' . $row, $data['total_penalties']);
+            $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode($fcfaFormat);
             $row++;
             $sheet->setCellValue('A' . $row, 'Nombre de paiements:');
             $sheet->setCellValue('B' . $row, $data['total_payments']);
             $row++;
             $sheet->setCellValue('A' . $row, 'Dépenses:');
-            $sheet->setCellValue('B' . $row, number_format($data['total_expenses'] ?? 0, 0, ',', ' ') . ' FCFA');
+            $sheet->setCellValue('B' . $row, $data['total_expenses'] ?? 0);
+            $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode($fcfaFormat);
             $row++;
             $sheet->setCellValue('A' . $row, 'Montant impayé:');
-            $sheet->setCellValue('B' . $row, number_format($data['overdue_amount'] ?? 0, 0, ',', ' ') . ' FCFA');
+            $sheet->setCellValue('B' . $row, $data['overdue_amount'] ?? 0);
+            $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode($fcfaFormat);
             $row++;
             $sheet->setCellValue('A' . $row, 'Taux de recouvrement:');
-            $sheet->setCellValue('B' . $row, number_format($data['recovery_rate'] ?? 0, 2) . '%');
+            $sheet->setCellValue('B' . $row, ($data['recovery_rate'] ?? 0) / 100);
+            $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode('0.00%');
 
-            // Revenus par bien
             $row += 2;
             $sheet->setCellValue('A' . $row, 'Revenus par bien');
             $sheet->getStyle('A' . $row)->getFont()->setBold(true);
@@ -243,14 +234,14 @@ class ReportService
             $sheet->setCellValue('B' . $row, 'Revenus');
             $sheet->getStyle('A' . $row . ':B' . $row)->getFont()->setBold(true);
             $row++;
-            
+
             foreach ($data['by_property'] as $property) {
                 $sheet->setCellValue('A' . $row, $property['property_address']);
-                $sheet->setCellValue('B' . $row, number_format($property['revenue'], 0, ',', ' ') . ' FCFA');
+                $sheet->setCellValue('B' . $row, (float) $property['revenue']);
+                $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode($fcfaFormat);
                 $row++;
             }
 
-            // Revenus par méthode de paiement
             $row += 1;
             $sheet->setCellValue('A' . $row, 'Revenus par méthode de paiement');
             $sheet->getStyle('A' . $row)->getFont()->setBold(true);
@@ -260,24 +251,23 @@ class ReportService
             $sheet->setCellValue('C' . $row, 'Nombre');
             $sheet->getStyle('A' . $row . ':C' . $row)->getFont()->setBold(true);
             $row++;
-            
+
             foreach ($data['by_payment_method'] as $method) {
                 $methodName = $method['payment_method'] ?? 'non_specifie';
                 $sheet->setCellValue('A' . $row, ucfirst(str_replace('_', ' ', $methodName)));
-                $sheet->setCellValue('B' . $row, number_format($method['revenue'], 0, ',', ' ') . ' FCFA');
+                $sheet->setCellValue('B' . $row, (float) $method['revenue']);
+                $sheet->getStyle('B' . $row)->getNumberFormat()->setFormatCode($fcfaFormat);
                 $sheet->setCellValue('C' . $row, $method['count']);
                 $row++;
             }
 
-            // Ajuster la largeur des colonnes
             $sheet->getColumnDimension('A')->setWidth(30);
             $sheet->getColumnDimension('B')->setWidth(20);
             $sheet->getColumnDimension('C')->setWidth(15);
 
-            // Sauvegarder
             $path = storage_path('app/public/reports/' . $filename);
             $directory = dirname($path);
-            
+
             if (!file_exists($directory)) {
                 mkdir($directory, 0755, true);
             }
@@ -288,41 +278,37 @@ class ReportService
             return $filename;
         } catch (\Exception $e) {
             \Log::error('Erreur export Excel: ' . $e->getMessage());
-            
-            // Fallback vers CSV
+
             return $this->exportToCSV($data, str_replace('.xlsx', '.csv', $filename));
         }
     }
 
-    /**
-     * Export vers CSV (fallback)
-     */
     protected function exportToCSV(array $data, string $filename): string
     {
         $csvContent = "Rapport Financier\n";
         $csvContent .= "Période," . $data['period']['start'] . " - " . $data['period']['end'] . "\n";
-        $csvContent .= "Revenus totaux," . number_format($data['total_revenue'] ?? 0, 0, ',', ' ') . " FCFA\n";
-        $csvContent .= "Dépenses," . number_format($data['total_expenses'] ?? 0, 0, ',', ' ') . " FCFA\n";
-        $csvContent .= "Pénalités," . number_format($data['total_penalties'] ?? 0, 0, ',', ' ') . " FCFA\n";
+        $csvContent .= "Revenus totaux," . ($data['total_revenue'] ?? 0) . "\n";
+        $csvContent .= "Dépenses," . ($data['total_expenses'] ?? 0) . "\n";
+        $csvContent .= "Pénalités," . ($data['total_penalties'] ?? 0) . "\n";
         $csvContent .= "Nombre de paiements," . ($data['total_payments'] ?? 0) . "\n";
-        $csvContent .= "Montant impayé," . number_format($data['overdue_amount'] ?? 0, 0, ',', ' ') . " FCFA\n";
+        $csvContent .= "Montant impayé," . ($data['overdue_amount'] ?? 0) . "\n";
         $csvContent .= "Taux de recouvrement," . number_format($data['recovery_rate'], 2) . "%\n\n";
-        
+
         $csvContent .= "Revenus par bien\n";
         $csvContent .= "Bien,Revenus\n";
         foreach ($data['by_property'] as $property) {
-            $csvContent .= $property['property_address'] . "," . number_format($property['revenue'], 0, ',', ' ') . " FCFA\n";
+            $csvContent .= $property['property_address'] . "," . $property['revenue'] . "\n";
         }
-        
+
         $csvContent .= "\nRevenus par méthode de paiement\n";
         $csvContent .= "Méthode,Revenus,Nombre\n";
         foreach ($data['by_payment_method'] as $method) {
             $methodName = $method['payment_method'] ?? 'non_specifie';
-            $csvContent .= ucfirst(str_replace('_', ' ', $methodName)) . "," . number_format($method['revenue'], 0, ',', ' ') . " FCFA," . ($method['count'] ?? 0) . "\n";
+            $csvContent .= ucfirst(str_replace('_', ' ', $methodName)) . "," . $method['revenue'] . "," . ($method['count'] ?? 0) . "\n";
         }
 
         $path = storage_path('app/public/reports/' . $filename);
-        
+
         if (!file_exists(dirname($path))) {
             mkdir(dirname($path), 0755, true);
         }
@@ -331,23 +317,4 @@ class ReportService
 
         return $filename;
     }
-
-    /**
-     * Export vers PDF
-     */
-    public function exportToPDF(array $data, string $filename): string
-    {
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.pdf', ['data' => $data])
-            ->setPaper('a4', 'landscape');
-        $path = storage_path('app/public/reports/' . $filename);
-        
-        if (!file_exists(dirname($path))) {
-            mkdir(dirname($path), 0755, true);
-        }
-        
-        $pdf->save($path);
-        
-        return $filename;
-    }
 }
-

@@ -36,7 +36,7 @@
         </form>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div class="stat-card">
             <p class="text-xs font-medium text-slate-500 mb-1">Revenus totaux</p>
             <p class="text-xl font-bold text-slate-900">{{ number_format($report['total_revenue'] ?? 0, 0, ',', ' ') }} FCFA</p>
@@ -48,6 +48,10 @@
         <div class="stat-card">
             <p class="text-xs font-medium text-slate-500 mb-1">Dépenses</p>
             <p class="text-xl font-bold text-slate-900">{{ number_format($report['total_expenses'] ?? 0, 0, ',', ' ') }} FCFA</p>
+        </div>
+        <div class="stat-card">
+            <p class="text-xs font-medium text-slate-500 mb-1">Pénalités</p>
+            <p class="text-xl font-bold text-amber-600">{{ number_format($report['total_penalties'] ?? 0, 0, ',', ' ') }} FCFA</p>
         </div>
         <div class="stat-card">
             <p class="text-xs font-medium text-slate-500 mb-1">Bénéfice net</p>
@@ -72,17 +76,13 @@
                     <span class="text-xs font-medium text-slate-700">Paiements en retard</span>
                     <span class="text-sm font-bold text-red-600">{{ $report['overdue_payments'] ?? 0 }}</span>
                 </div>
-                @php
-                    $total = ($report['completed_payments'] ?? 0) + ($report['pending_payments'] ?? 0) + ($report['overdue_payments'] ?? 0);
-                    $rate = $total > 0 ? round(($report['completed_payments'] ?? 0) / $total * 100) : 0;
-                @endphp
                 <div class="pt-3 border-t border-slate-100">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs font-medium text-slate-600">Taux de recouvrement</span>
-                        <span class="text-sm font-bold text-slate-900">{{ $rate }}%</span>
+                        <span class="text-sm font-bold text-slate-900">{{ number_format($report['recovery_rate'] ?? 0, 2) }}%</span>
                     </div>
                     <div class="w-full bg-slate-100 rounded-full h-2">
-                        <div class="bg-primary-600 h-2 rounded-full transition-all" style="width: {{ $rate }}%"></div>
+                        <div class="bg-primary-600 h-2 rounded-full transition-all" style="width: {{ min($report['recovery_rate'] ?? 0, 100) }}%"></div>
                     </div>
                 </div>
             </div>
@@ -116,6 +116,66 @@
                         <div class="bg-emerald-500 h-2 rounded-full transition-all" style="width: {{ $occupancyRate }}%"></div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="card-panel">
+            <div class="card-panel-header">Revenus par bien</div>
+            <div class="card-panel-body">
+                @if(!empty($report['by_property']))
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-200">
+                                <th class="text-left py-2 px-3 text-xs font-medium text-slate-500">Bien</th>
+                                <th class="text-right py-2 px-3 text-xs font-medium text-slate-500">Revenus</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($report['by_property'] as $item)
+                            <tr class="border-b border-slate-50">
+                                <td class="py-2 px-3 text-slate-700">{{ $item['property_address'] }}</td>
+                                <td class="py-2 px-3 text-right font-medium text-slate-900">{{ number_format($item['revenue'], 0, ',', ' ') }} FCFA</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <p class="text-sm text-slate-500 py-4 text-center">Aucune donnée sur cette période.</p>
+                @endif
+            </div>
+        </div>
+
+        <div class="card-panel">
+            <div class="card-panel-header">Revenus par méthode de paiement</div>
+            <div class="card-panel-body">
+                @if(!empty($report['by_payment_method']))
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-200">
+                                <th class="text-left py-2 px-3 text-xs font-medium text-slate-500">Méthode</th>
+                                <th class="text-right py-2 px-3 text-xs font-medium text-slate-500">Montant</th>
+                                <th class="text-center py-2 px-3 text-xs font-medium text-slate-500">Nb</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($report['by_payment_method'] as $item)
+                            <tr class="border-b border-slate-50">
+                                <td class="py-2 px-3 text-slate-700">{{ ucfirst(str_replace('_', ' ', $item['payment_method'] ?? 'non spécifié')) }}</td>
+                                <td class="py-2 px-3 text-right font-medium text-slate-900">{{ number_format($item['revenue'], 0, ',', ' ') }} FCFA</td>
+                                <td class="py-2 px-3 text-center text-slate-600">{{ $item['count'] ?? 0 }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <p class="text-sm text-slate-500 py-4 text-center">Aucune donnée sur cette période.</p>
+                @endif
             </div>
         </div>
     </div>
