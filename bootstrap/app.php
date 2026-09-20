@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Enregistrer les middlewares personnalisés
         $middleware->alias([
+            // Spatie Laravel Permission
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            // Middlewares applicatifs
             'role.owner' => \App\Http\Middleware\EnsureOwnerRole::class,
             'role.tenant' => \App\Http\Middleware\EnsureTenantRole::class,
             'role.accountant' => \App\Http\Middleware\EnsureAccountantRole::class,
