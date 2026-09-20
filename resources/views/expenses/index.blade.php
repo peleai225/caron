@@ -10,10 +10,20 @@
             <h2 class="page-title-main">Depenses</h2>
             <p class="page-subtitle">Suivez toutes vos depenses immobilieres</p>
         </div>
-        <button type="button" data-modal-open="modal-expense-create" class="btn-primary">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            Nouvelle depense
-        </button>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('expenses.export.excel', request()->query()) }}" class="btn-secondary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Excel
+            </a>
+            <a href="{{ route('expenses.export.pdf', request()->query()) }}" class="btn-secondary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                PDF
+            </a>
+            <button type="button" data-modal-open="modal-expense-create" class="btn-primary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Nouvelle dépense
+            </button>
+        </div>
     </header>
 
     <!-- Stats -->
@@ -53,7 +63,7 @@
     <!-- Filters -->
     <form method="GET" action="{{ route('expenses.index') }}" class="card-panel">
         <div class="card-panel-body">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1.5">Recherche</label>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Rechercher..." class="input-modern">
@@ -71,12 +81,18 @@
                     <label class="block text-xs font-medium text-slate-600 mb-1.5">Type</label>
                     <select name="type" class="input-modern">
                         <option value="">Tous les types</option>
-                        <option value="maintenance" {{ request('type') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                        <option value="tax" {{ request('type') == 'tax' ? 'selected' : '' }}>Taxe</option>
-                        <option value="insurance" {{ request('type') == 'insurance' ? 'selected' : '' }}>Assurance</option>
-                        <option value="utilities" {{ request('type') == 'utilities' ? 'selected' : '' }}>Services publics</option>
-                        <option value="other" {{ request('type') == 'other' ? 'selected' : '' }}>Autre</option>
+                        @foreach(\App\Models\Expense::expenseTypes() as $value => $label)
+                            <option value="{{ $value }}" {{ request('type') == $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
                     </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Date début</label>
+                    <input type="date" name="start_date" value="{{ request('start_date') }}" class="input-modern">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Date fin</label>
+                    <input type="date" name="end_date" value="{{ request('end_date') }}" class="input-modern">
                 </div>
                 <div class="flex items-end gap-2">
                     <button type="submit" class="btn-primary flex-1">Filtrer</button>

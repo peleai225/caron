@@ -80,6 +80,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('owners', OwnerController::class);
         
         // Expenses
+        Route::get('/expenses/export/excel', [ExpenseController::class, 'exportExcel'])->name('expenses.export.excel');
+        Route::get('/expenses/export/pdf', [ExpenseController::class, 'exportPDF'])->name('expenses.export.pdf');
         Route::resource('expenses', ExpenseController::class);
         
         // Accounts
