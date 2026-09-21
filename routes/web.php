@@ -76,6 +76,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/rents/search-tenants', [PaymentController::class, 'searchTenants'])->name('rents.search-tenants');
         Route::resource('rents', PaymentController::class);
         Route::get('/rents/{payment}/receipt', [PaymentController::class, 'downloadReceipt'])->name('rents.receipt');
+        Route::delete('/payment-schedules/{paymentSchedule}', [PaymentController::class, 'destroySchedule'])
+            ->middleware('role:super_admin|admin_agence')
+            ->name('payment-schedules.destroy');
         
         // Owners
         Route::resource('owners', OwnerController::class);

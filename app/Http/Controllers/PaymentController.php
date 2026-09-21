@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Payment;
 use App\Models\Contract;
 use App\Models\PaymentSchedule;
+use App\Models\Penalty;
 use App\Models\Owner;
 use App\Models\Property;
 use App\Models\Tenant;
@@ -304,6 +305,28 @@ class PaymentController extends Controller
 
         return redirect()->route('rents.index')
             ->with('success', 'Paiement supprimé avec succès.');
+    }
+
+    public function destroySchedule(PaymentSchedule $paymentSchedule)
+    {
+        $this->authorizeAgency(optional($paymentSchedule->contract)->agency_id);
+
+        abort_if(
+            $paymentSchedule->paid_at !== null || $paymentSchedule->status === 'paid',
+            403,
+            'Impossible de supprimer une échéance déjà réglée.'
+        );
+
+        // Supprimer les pénalités liées
+        $paymentSchedule->penalties()->delete();
+
+        $agencyId = optional($paymentSchedule->contract)->agency_id;
+        $paymentSchedule->delete();
+
+        $this->forgetDashboardCache($agencyId);
+
+        return redirect()->route('rents.index')
+            ->with('success', 'Arriéré supprimé avec succès.');
     }
 
     public function downloadReceipt(Payment $payment)

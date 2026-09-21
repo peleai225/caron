@@ -183,6 +183,7 @@
                         <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Montant</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Echeance</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Statut</th>
+                        <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
@@ -193,9 +194,17 @@
                             <td data-label="Montant" class="px-4 py-3 text-sm font-medium text-slate-900">{{ number_format($schedule->amount, 0, ',', ' ') }} F</td>
                             <td data-label="Echéance" class="px-4 py-3 text-xs text-slate-500">{{ $schedule->due_date->format('d/m/Y') }}</td>
                             <td data-label="Statut" class="px-4 py-3"><x-status-badge status="impaye" size="sm" /></td>
+                            <td data-label="" class="px-4 py-3">
+                                @hasanyrole('super_admin|admin_agence')
+                                <form method="POST" action="{{ route('payment-schedules.destroy', $schedule) }}" onsubmit="return confirm('Supprimer cet arriéré ? Les pénalités liées seront aussi supprimées.')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="text-xs font-medium text-red-600 hover:text-red-700">Supprimer</button>
+                                </form>
+                                @endhasanyrole
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-4 py-6 text-center text-sm text-slate-500">Aucun arriere.</td></tr>
+                        <tr><td colspan="6" class="px-4 py-6 text-center text-sm text-slate-500">Aucun arriere.</td></tr>
                     @endforelse
                 </tbody>
             </table>
