@@ -294,51 +294,71 @@
             <input type="hidden" name="redirect_to" value="dashboard">
 
             <div class="px-5 py-4 space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Contrat <span class="text-red-500">*</span></label>
-                    <select id="qp-contract-id" name="contract_id" required class="input-modern searchable-select">
-                        <option value="">Sélectionner un contrat actif...</option>
-                        @foreach($contracts ?? [] as $c)
-                            <option value="{{ $c->id }}" data-rent="{{ $c->rent_amount }}">
-                                {{ $c->property?->address ?? 'Bien #'.$c->property_id }} — {{ $c->tenant?->full_name ?? 'Locataire' }} ({{ number_format($c->rent_amount, 0, ',', ' ') }} F)
-                            </option>
-                        @endforeach
-                    </select>
+
+                {{-- Recherche locataire --}}
+                <div class="relative" id="qp-search-wrap">
+                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Locataire / N° porte / Téléphone <span class="text-red-500">*</span></label>
+                    <input type="text" id="qp-search" autocomplete="off" class="input-modern" placeholder="Tapez un nom, n° de porte ou téléphone...">
+                    <input type="hidden" id="qp-contract-id" name="contract_id">
+                    <div id="qp-results" class="absolute z-30 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-56 overflow-y-auto hidden"></div>
+                </div>
+
+                {{-- Infos contrat trouvé --}}
+                <div id="qp-contract-info" class="hidden p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-0.5">
+                    <p id="qp-info-tenant" class="font-semibold text-slate-900"></p>
+                    <p id="qp-info-property"></p>
+                    <p id="qp-info-rent"></p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1.5">Montant (FCFA) <span class="text-red-500">*</span></label>
-                        <input type="number" id="qp-amount" name="amount" required min="0" step="1" class="input-modern" placeholder="150000">
+                        <input type="number" id="qp-amount" name="amount" required min="0" step="1" class="input-modern" placeholder="0">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1.5">Date <span class="text-red-500">*</span></label>
                         <input type="date" name="payment_date" required value="{{ date('Y-m-d') }}" class="input-modern">
                     </div>
                     <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Période <span class="text-red-500">*</span></label>
+                        <input type="month" name="period" required value="{{ date('Y-m') }}" class="input-modern">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Nb paiements</label>
+                        <input type="number" name="payment_count" value="1" min="1" max="24" class="input-modern">
+                    </div>
+                    <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1.5">Méthode <span class="text-red-500">*</span></label>
                         <select name="payment_method" id="qp-method" required class="input-modern">
                             <option value="">Choisir...</option>
                             <option value="cash">Espèces</option>
+                            <option value="check">Chèque</option>
+                            <option value="bank_transfer">Virement</option>
+                            <option value="transfer">Transfert</option>
+                            <option value="mobile_money">Mobile Money</option>
                             <option value="moneyfusion">MoneyFusion (Wave / OM / MTN)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Période <span class="text-red-500">*</span></label>
-                        <input type="month" name="period" required value="{{ date('Y-m') }}" class="input-modern">
+                        <label class="block text-xs font-medium text-slate-600 mb-1.5">Commission (%)</label>
+                        <input type="number" name="commission_percent" id="qp-commission" value="0" min="0" max="100" step="0.01" class="input-modern">
                     </div>
                 </div>
 
-                {{-- Champ téléphone — affiché uniquement pour MoneyFusion --}}
+                {{-- Téléphone MoneyFusion --}}
                 <div id="qp-phone-wrap" class="hidden">
                     <label class="block text-xs font-medium text-slate-600 mb-1.5">Téléphone du client <span class="text-red-500">*</span></label>
                     <input type="tel" name="phone" id="qp-phone" class="input-modern" placeholder="+225 07 XX XX XX XX">
-                    <p class="mt-1 text-[11px] text-slate-400">Numéro qui recevra la demande de paiement (Wave, Orange Money ou MTN)</p>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Référence</label>
-                    <input type="text" name="reference" class="input-modern" placeholder="N° de transaction (optionnel)">
+                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Note</label>
+                    <input type="text" name="notes" class="input-modern" placeholder="Référence, observations... (optionnel)">
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="generate_receipt" id="qp-receipt" value="1" checked class="w-4 h-4 rounded border-slate-300 text-primary-600">
+                    <label for="qp-receipt" class="text-xs font-medium text-slate-600">Générer un reçu</label>
                 </div>
             </div>
 
@@ -355,23 +375,74 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var contractSel = document.getElementById('qp-contract-id');
+    var searchInput  = document.getElementById('qp-search');
+    var contractId   = document.getElementById('qp-contract-id');
+    var results      = document.getElementById('qp-results');
     var amountInput  = document.getElementById('qp-amount');
+    var contractInfo = document.getElementById('qp-contract-info');
     var methodSel    = document.getElementById('qp-method');
     var phoneWrap    = document.getElementById('qp-phone-wrap');
     var phoneInput   = document.getElementById('qp-phone');
     var submitBtn    = document.getElementById('qp-submit');
+    var searchTimer  = null;
 
-    if (contractSel && amountInput) {
-        contractSel.addEventListener('change', function () {
-            var opt = contractSel.options[contractSel.selectedIndex];
-            if (opt && opt.dataset.rent) {
-                amountInput.value = parseInt(opt.dataset.rent, 10);
-            }
-        });
-    }
+    if (!searchInput) return;
 
-    if (methodSel && phoneWrap) {
+    searchInput.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        var q = this.value.trim();
+        if (q.length < 2) { results.classList.add('hidden'); return; }
+        searchTimer = setTimeout(function () {
+            fetch('/rents/search-tenants?q=' + encodeURIComponent(q), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(data) {
+                results.innerHTML = '';
+                if (!data.length) {
+                    var el = document.createElement('div');
+                    el.className = 'px-4 py-3 text-xs text-slate-400';
+                    el.textContent = 'Aucun résultat';
+                    results.appendChild(el);
+                    results.classList.remove('hidden');
+                    return;
+                }
+                data.forEach(function(item) {
+                    var el = document.createElement('button');
+                    el.type = 'button';
+                    el.className = 'w-full text-left px-4 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0';
+                    var name = document.createElement('p');
+                    name.className = 'text-xs font-semibold text-slate-900';
+                    name.textContent = item.tenant_name;
+                    var sub = document.createElement('p');
+                    sub.className = 'text-[11px] text-slate-500';
+                    sub.textContent = item.property_address + (item.designation ? ' · ' + item.designation : '') + ' · ' + Number(item.rent_amount).toLocaleString('fr-FR') + ' FCFA';
+                    el.appendChild(name);
+                    el.appendChild(sub);
+                    el.addEventListener('click', function() {
+                        contractId.value  = item.contract_id;
+                        amountInput.value = item.rent_amount;
+                        searchInput.value = item.tenant_name;
+                        document.getElementById('qp-info-tenant').textContent   = item.tenant_name + (item.phone ? ' · ' + item.phone : '');
+                        document.getElementById('qp-info-property').textContent = item.property_address;
+                        document.getElementById('qp-info-rent').textContent     = 'Loyer : ' + Number(item.rent_amount).toLocaleString('fr-FR') + ' FCFA';
+                        contractInfo.classList.remove('hidden');
+                        results.classList.add('hidden');
+                    });
+                    results.appendChild(el);
+                });
+                results.classList.remove('hidden');
+            });
+        }, 300);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!document.getElementById('qp-search-wrap').contains(e.target)) {
+            results.classList.add('hidden');
+        }
+    });
+
+    if (methodSel) {
         methodSel.addEventListener('change', function () {
             var isMF = this.value === 'moneyfusion';
             phoneWrap.classList.toggle('hidden', !isMF);

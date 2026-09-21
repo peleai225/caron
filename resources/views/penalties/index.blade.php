@@ -127,6 +127,7 @@
                                     data-status="{{ $penalty->status }}"
                                     data-description="{{ $penalty->description ?? '' }}"
                                     data-mark-paid-url="{{ $penalty->status === 'unpaid' ? route('penalties.mark-as-paid', $penalty) : '' }}"
+                                    data-delete-url="{{ $penalty->status === 'unpaid' ? route('penalties.destroy', $penalty) : '' }}"
                                     class="px-2 py-1 text-xs font-medium text-primary-600 hover:bg-primary-50 rounded transition-colors">Voir</button>
                                 @if($penalty->status === 'unpaid')
                                 <form method="POST" action="{{ route('penalties.destroy', $penalty) }}" onsubmit="return confirm('Supprimer cette pénalité ?')">
@@ -237,13 +238,21 @@
                 <p id="pv-description" class="text-sm text-slate-700">—</p>
             </div>
         </div>
-        <div id="pv-action-wrap" class="px-5 py-4 border-t border-slate-100">
+        <div id="pv-action-wrap" class="px-5 py-4 border-t border-slate-100 space-y-2">
             <form id="form-penalty-paid" method="POST" action="#">
                 @csrf
                 @method('PUT')
                 <button type="submit" class="btn-primary w-full justify-center">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     Marquer comme payée
+                </button>
+            </form>
+            <form id="form-penalty-delete" method="POST" action="#" onsubmit="return confirm('Supprimer cette pénalité impayée ?')">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Supprimer cette pénalité
                 </button>
             </form>
         </div>
@@ -283,10 +292,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             var actionWrap = document.getElementById('pv-action-wrap');
+            var deleteForm = document.getElementById('form-penalty-delete');
             if (btn.dataset.status === 'unpaid' && btn.dataset.markPaidUrl) {
                 document.getElementById('form-penalty-paid').action = btn.dataset.markPaidUrl;
+                if (deleteForm && btn.dataset.deleteUrl) {
+                    deleteForm.action = btn.dataset.deleteUrl;
+                    deleteForm.classList.remove('hidden');
+                } else if (deleteForm) {
+                    deleteForm.classList.add('hidden');
+                }
                 actionWrap.classList.remove('hidden');
             } else {
+                if (deleteForm) deleteForm.classList.add('hidden');
                 actionWrap.classList.add('hidden');
             }
 
