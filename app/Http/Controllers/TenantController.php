@@ -22,7 +22,12 @@ class TenantController extends Controller
                 $q->where('first_name', 'like', '%' . $request->search . '%')
                   ->orWhere('last_name', 'like', '%' . $request->search . '%')
                   ->orWhere('email', 'like', '%' . $request->search . '%')
-                  ->orWhere('phone', 'like', '%' . $request->search . '%');
+                  ->orWhere('phone', 'like', '%' . $request->search . '%')
+                  ->orWhere('cni_number', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('contracts.property', function ($pq) use ($request) {
+                      $pq->where('designation', 'like', '%' . $request->search . '%')
+                         ->orWhere('address', 'like', '%' . $request->search . '%');
+                  });
             });
         }
 

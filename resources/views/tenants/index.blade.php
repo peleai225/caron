@@ -17,20 +17,21 @@
     </header>
 
     <!-- Filters -->
-    <form method="GET" action="{{ route('tenants.index') }}" data-no-protect class="card-panel">
+    <form method="GET" action="{{ route('tenants.index') }}" data-no-protect class="card-panel" id="tenant-filter-form">
         <div class="card-panel-body">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1.5">Recherche</label>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Nom, email, telephone..." class="input-modern">
+                    <input type="text" id="tenant-search" name="search" value="{{ request('search') }}"
+                           placeholder="Nom, email, téléphone, CNI..." class="input-modern" autocomplete="off">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1.5">Statut</label>
-                    <select name="status" class="input-modern">
+                    <select name="status" id="tenant-status" class="input-modern">
                         <option value="">Tous</option>
                         <option value="actif" {{ request('status') == 'actif' ? 'selected' : '' }}>Actif</option>
                         <option value="en_retard" {{ request('status') == 'en_retard' ? 'selected' : '' }}>En retard</option>
-                        <option value="resilie" {{ request('status') == 'resilie' ? 'selected' : '' }}>Resilie</option>
+                        <option value="resilie" {{ request('status') == 'resilie' ? 'selected' : '' }}>Résilié</option>
                     </select>
                 </div>
                 <div class="flex items-end gap-2">
@@ -237,6 +238,21 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit debouncé sur la recherche texte
+    var tenantSearch = document.getElementById('tenant-search');
+    var tenantStatus = document.getElementById('tenant-status');
+    var tenantForm   = document.getElementById('tenant-filter-form');
+    var searchTimer  = null;
+    if (tenantSearch) {
+        tenantSearch.addEventListener('input', function() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(function() { tenantForm.submit(); }, 400);
+        });
+    }
+    if (tenantStatus) {
+        tenantStatus.addEventListener('change', function() { tenantForm.submit(); });
+    }
+
     document.querySelectorAll('[data-tenant-edit]').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var form = document.getElementById('form-tenant-edit');

@@ -138,10 +138,13 @@ class PaymentController extends Controller
                 $query->whereHas('tenant', function ($tq) use ($q) {
                     $tq->where('first_name', 'like', "%{$q}%")
                        ->orWhere('last_name', 'like', "%{$q}%")
-                       ->orWhere('phone', 'like', "%{$q}%");
+                       ->orWhere('phone', 'like', "%{$q}%")
+                       ->orWhere('email', 'like', "%{$q}%")
+                       ->orWhere('cni_number', 'like', "%{$q}%");
                 })->orWhereHas('property', function ($pq) use ($q) {
                     $pq->where('designation', 'like', "%{$q}%")
-                       ->orWhere('address', 'like', "%{$q}%");
+                       ->orWhere('address', 'like', "%{$q}%")
+                       ->orWhere('neighborhood', 'like', "%{$q}%");
                 });
             })
             ->limit(15)
@@ -181,7 +184,7 @@ class PaymentController extends Controller
             'period' => 'required|string',
             'payment_count' => 'nullable|integer|min:1|max:24',
             'payment_type' => 'nullable|in:loyer,charges_locatives,factures,vente,commission',
-            'payment_method' => 'required|in:moneyfusion,cash,check,transfer',
+            'payment_method' => 'required|in:moneyfusion,cash,check,transfer,bank_transfer,mobile_money',
             'phone'          => 'nullable|string|max:20',
             'reference'      => 'nullable|string|max:255',
             'notes'          => 'nullable|string',
@@ -259,7 +262,7 @@ class PaymentController extends Controller
             'payment_date' => 'required|date',
             'period' => 'required|string',
             'payment_type' => 'nullable|in:loyer,charges_locatives,factures,vente,commission',
-            'payment_method' => 'required|in:moneyfusion,cash,check',
+            'payment_method' => 'required|in:moneyfusion,cash,check,transfer,bank_transfer,mobile_money',
             'status' => 'required|in:pending,completed,failed,refunded',
             'reference' => 'nullable|string|max:255',
             'notes' => 'nullable|string',

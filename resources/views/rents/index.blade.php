@@ -53,7 +53,8 @@
     <!-- Filters -->
     <div class="card-panel">
         <div class="card-panel-body">
-            <form method="GET" action="{{ route('rents.index') }}" id="rents-filter-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+            <form method="GET" action="{{ route('rents.index') }}" id="rents-filter-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                {{-- Ligne 1 --}}
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1.5">Bailleur</label>
                     <select name="owner_id" class="rent-filter input-modern searchable-select">
@@ -64,11 +65,11 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Residence</label>
+                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Résidence</label>
                     <select name="property_id" class="rent-filter input-modern searchable-select">
                         <option value="">Toutes</option>
                         @foreach($properties as $p)
-                            <option value="{{ $p->id }}" {{ request('property_id') == $p->id ? 'selected' : '' }}>{{ $p->address ?? $p->city }}</option>
+                            <option value="{{ $p->id }}" {{ request('property_id') == $p->id ? 'selected' : '' }}>{{ $p->full_address }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -77,16 +78,46 @@
                     <select name="tenant_id" class="rent-filter input-modern searchable-select">
                         <option value="">Tous</option>
                         @foreach($tenants as $t)
-                            <option value="{{ $t->id }}" {{ request('tenant_id') == $t->id ? 'selected' : '' }}>{{ $t->first_name }} {{ $t->last_name }}</option>
+                            <option value="{{ $t->id }}" {{ request('tenant_id') == $t->id ? 'selected' : '' }}>{{ $t->full_name }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Periode</label>
+                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Période</label>
                     <input type="month" name="period" value="{{ request('period') }}" class="rent-filter input-modern">
                 </div>
-                <div class="flex items-end gap-2">
-                    <button type="submit" class="btn-primary flex-1">Filtrer</button>
+                {{-- Ligne 2 --}}
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Statut</label>
+                    <select name="status" class="rent-filter input-modern">
+                        <option value="">Tous</option>
+                        <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Encaissé</option>
+                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>En attente</option>
+                        <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Échoué</option>
+                        <option value="refunded" {{ request('status') == 'refunded' ? 'selected' : '' }}>Remboursé</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Méthode</label>
+                    <select name="payment_method" class="rent-filter input-modern">
+                        <option value="">Toutes</option>
+                        <option value="cash" {{ request('payment_method') == 'cash' ? 'selected' : '' }}>Espèces</option>
+                        <option value="check" {{ request('payment_method') == 'check' ? 'selected' : '' }}>Chèque</option>
+                        <option value="transfer" {{ request('payment_method') == 'transfer' ? 'selected' : '' }}>Virement</option>
+                        <option value="mobile_money" {{ request('payment_method') == 'mobile_money' ? 'selected' : '' }}>Mobile Money</option>
+                        <option value="moneyfusion" {{ request('payment_method') == 'moneyfusion' ? 'selected' : '' }}>MoneyFusion</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Du</label>
+                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="rent-filter input-modern">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1.5">Au</label>
+                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="rent-filter input-modern">
+                </div>
+                <div class="lg:col-span-4 flex justify-end gap-2">
+                    <button type="submit" class="btn-primary">Filtrer</button>
                     <a href="{{ route('rents.index') }}" class="btn-secondary">Reset</a>
                 </div>
             </form>
@@ -112,13 +143,20 @@
                 <tbody class="divide-y divide-slate-50">
                     @forelse($recentPayments ?? [] as $payment)
                         <tr class="hover:bg-slate-50/50 transition-colors">
-                            <td data-label="Locataire" class="px-4 py-3 text-sm font-medium text-slate-900">{{ $payment->contract->tenant->first_name ?? '' }} {{ $payment->contract->tenant->last_name ?? '' }}</td>
-                            <td data-label="Bien" class="px-4 py-3 text-sm text-slate-600">{{ $payment->contract->property->address ?? '—' }}</td>
+                            <td data-label="Locataire" class="px-4 py-3 text-sm font-medium text-slate-900">{{ $payment->contract?->tenant?->full_name ?? '—' }}</td>
+                            <td data-label="Bien" class="px-4 py-3 text-sm text-slate-600">{{ $payment->contract?->property?->full_address ?? '—' }}</td>
                             <td data-label="Loyer" class="px-4 py-3 text-sm text-slate-900">{{ number_format($payment->amount, 0, ',', ' ') }} F</td>
                             <td data-label="Encaissé" class="px-4 py-3 text-sm font-medium text-emerald-600">{{ number_format($payment->total_amount ?? $payment->amount, 0, ',', ' ') }} F</td>
                             <td data-label="Méthode" class="px-4 py-3 text-xs text-slate-500 capitalize">{{ str_replace('_', ' ', $payment->payment_method ?? '—') }}</td>
                             <td data-label="Statut" class="px-4 py-3"><x-status-badge :status="$payment->status" size="sm" /></td>
-                            <td data-label="" class="px-4 py-3"><a href="{{ route('rents.show', $payment) }}" class="text-xs font-medium text-primary-600 hover:text-primary-700">Voir</a></td>
+                            <td data-label="" class="px-4 py-3">
+                                <div class="flex items-center gap-1">
+                                    <a href="{{ route('rents.show', $payment) }}" class="text-xs font-medium text-primary-600 hover:text-primary-700">Voir</a>
+                                    @if($payment->receipt)
+                                    <a href="{{ route('rents.receipt', $payment) }}" class="text-xs font-medium text-emerald-600 hover:text-emerald-700">Quittance</a>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr><td colspan="7" class="px-4 py-8 text-center text-sm text-slate-500">Aucun paiement recent.</td></tr>
@@ -150,8 +188,8 @@
                 <tbody class="divide-y divide-slate-50">
                     @forelse($overduePayments ?? [] as $schedule)
                         <tr class="hover:bg-slate-50/50">
-                            <td data-label="Locataire" class="px-4 py-3 text-sm font-medium text-slate-900">{{ $schedule->contract->tenant->first_name ?? '' }} {{ $schedule->contract->tenant->last_name ?? '' }}</td>
-                            <td data-label="Bien" class="px-4 py-3 text-sm text-slate-600">{{ $schedule->contract->property->address ?? '—' }}</td>
+                            <td data-label="Locataire" class="px-4 py-3 text-sm font-medium text-slate-900">{{ $schedule->contract?->tenant?->full_name ?? '—' }}</td>
+                            <td data-label="Bien" class="px-4 py-3 text-sm text-slate-600">{{ $schedule->contract?->property?->full_address ?? '—' }}</td>
                             <td data-label="Montant" class="px-4 py-3 text-sm font-medium text-slate-900">{{ number_format($schedule->amount, 0, ',', ' ') }} F</td>
                             <td data-label="Echéance" class="px-4 py-3 text-xs text-slate-500">{{ $schedule->due_date->format('d/m/Y') }}</td>
                             <td data-label="Statut" class="px-4 py-3"><x-status-badge status="impaye" size="sm" /></td>
@@ -185,14 +223,19 @@
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td data-label="Date" class="px-4 py-3 text-sm text-slate-900">{{ $payment->payment_date->format('d/m/Y') }}</td>
                             <td data-label="Locataire" class="px-4 py-3 text-sm font-medium text-slate-900">
-                                {{ $payment->contract?->tenant ? $payment->contract->tenant->first_name . ' ' . $payment->contract->tenant->last_name : '—' }}
+                                {{ $payment->contract?->tenant?->full_name ?? '—' }}
                             </td>
                             <td data-label="Bien" class="px-4 py-3 text-sm text-slate-600">{{ $payment->contract?->property?->address ?? '—' }}</td>
                             <td data-label="Montant" class="px-4 py-3 text-sm font-semibold text-slate-900">{{ number_format($payment->total_amount, 0, ',', ' ') }} F</td>
                             <td data-label="Méthode" class="px-4 py-3 text-xs text-slate-500 capitalize">{{ str_replace('_', ' ', $payment->payment_method) }}</td>
                             <td data-label="Statut" class="px-4 py-3"><x-status-badge :status="$payment->status" size="sm" /></td>
                             <td data-label="" class="px-4 py-3">
-                                <a href="{{ route('rents.show', $payment) }}" class="text-xs font-medium text-primary-600 hover:text-primary-700">Voir</a>
+                                <div class="flex items-center gap-1">
+                                    <a href="{{ route('rents.show', $payment) }}" class="text-xs font-medium text-primary-600 hover:text-primary-700">Voir</a>
+                                    @if($payment->receipt)
+                                    <a href="{{ route('rents.receipt', $payment) }}" class="text-xs font-medium text-emerald-600 hover:text-emerald-700">Quittance</a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty
