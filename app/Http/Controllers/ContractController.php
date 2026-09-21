@@ -193,7 +193,7 @@ class ContractController extends Controller
         $agencyId = $this->requireAgencyId();
         $q = trim($request->get('q', ''));
 
-        $properties = Property::where('agency_id', $agencyId)
+        $properties = Property::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))
             ->where('status', 'libre')
             ->where(function ($query) use ($q) {
                 $query->where('address', 'like', "%{$q}%")

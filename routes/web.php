@@ -99,7 +99,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
         Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
         Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])
-            ->middleware('role:super_admin')
+            ->middleware('role:super_admin|admin_agence')
             ->name('invoices.destroy');
         
         // Document Templates
@@ -138,7 +138,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/penalties/{penalty}', [PenaltyController::class, 'update'])->name('penalties.update');
         Route::put('/penalties/{penalty}/mark-as-paid', [PenaltyController::class, 'markAsPaid'])->name('penalties.mark-as-paid');
         Route::delete('/penalties/{penalty}', [PenaltyController::class, 'destroy'])
-            ->middleware('role:super_admin')
+            ->middleware('role:super_admin|admin_agence')
             ->name('penalties.destroy');
 
         // États des lieux

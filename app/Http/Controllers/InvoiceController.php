@@ -120,7 +120,7 @@ class InvoiceController extends Controller
 
     public function destroy(Invoice $invoice)
     {
-        abort_unless(auth()->user()->hasRole('super_admin'), 403, 'Seul le super administrateur peut supprimer une facture.');
+        abort_unless(auth()->user()->hasAnyRole(['super_admin', 'admin_agence']), 403, 'Seul le super administrateur ou l\'administrateur d\'agence peut supprimer une facture.');
 
         $agencyId = $invoice->contract?->agency_id;
         if ($agencyId) {

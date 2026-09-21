@@ -12,12 +12,12 @@
         </div>
         <div class="flex items-center gap-2">
             <a href="{{ route('invoices.download', $invoice) }}" class="btn-primary">Télécharger PDF</a>
-            @role('super_admin')
+            @hasanyrole('super_admin|admin_agence')
             <form method="POST" action="{{ route('invoices.destroy', $invoice) }}" onsubmit="return confirm('Supprimer définitivement cette facture ?')">
                 @csrf @method('DELETE')
                 <button type="submit" class="btn-danger">Supprimer</button>
             </form>
-            @endrole
+            @endhasanyrole
             <a href="{{ route('invoices.index') }}" class="btn-secondary">Retour</a>
         </div>
     </header>

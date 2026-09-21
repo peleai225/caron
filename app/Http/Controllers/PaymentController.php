@@ -131,7 +131,7 @@ class PaymentController extends Controller
             return response()->json([]);
         }
 
-        $contracts = Contract::where('agency_id', $agencyId)
+        $contracts = Contract::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))
             ->where('status', 'active')
             ->with(['tenant', 'property'])
             ->where(function ($query) use ($q) {
@@ -308,7 +308,7 @@ class PaymentController extends Controller
 
     public function downloadReceipt(Payment $payment)
     {
-        abort_if(optional($payment->contract)->agency_id !== $this->requireAgencyId(), 403);
+        $this->authorizeAgency(optional($payment->contract)->agency_id);
 
         $receipt = $payment->receipt;
         

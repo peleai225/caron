@@ -72,21 +72,14 @@
                     $isAccountant = $user->hasRole('comptable');
 
                     $agencyId = $user->agency_id ?? null;
-                    $sidebarCounters = $agencyId ? cache()->remember('sidebar_agency_' . $agencyId . '_counters', 45, function () use ($agencyId) {
+                    $isSuperAdmin = $user->hasRole('super_admin');
+                    $hasSidebarData = $agencyId || $isSuperAdmin;
+                    $sidebarCounters = $hasSidebarData ? cache()->remember('sidebar_' . ($agencyId ?? 'super') . '_counters', 45, function () use ($agencyId) {
                         return [
-                            'pendingPayments' => \App\Models\Payment::whereHas('contract', function($q) use ($agencyId) {
-                                $q->where('agency_id', $agencyId);
-                            })->where('status', 'pending')->count(),
-                            'overdueCount' => \App\Models\PaymentSchedule::whereHas('contract', function($q) use ($agencyId) {
-                                $q->where('agency_id', $agencyId);
-                            })->overdue()->count(),
-                            'unpaidPenalties' => \App\Models\Penalty::whereHas('paymentSchedule.contract', function($q) use ($agencyId) {
-                                $q->where('agency_id', $agencyId);
-                            })->whereNull('paid_at')->count(),
-                            'expiringContracts' => \App\Models\Contract::where('agency_id', $agencyId)
-                                ->where('status', 'active')
-                                ->whereBetween('end_date', [now(), now()->addDays(30)])
-                                ->count(),
+                            'pendingPayments' => \App\Models\Payment::when($agencyId, fn($q) => $q->whereHas('contract', fn($cq) => $cq->where('agency_id', $agencyId)))->where('status', 'pending')->count(),
+                            'overdueCount' => \App\Models\PaymentSchedule::when($agencyId, fn($q) => $q->whereHas('contract', fn($cq) => $cq->where('agency_id', $agencyId)))->overdue()->count(),
+                            'unpaidPenalties' => \App\Models\Penalty::when($agencyId, fn($q) => $q->whereHas('paymentSchedule.contract', fn($cq) => $cq->where('agency_id', $agencyId)))->whereNull('paid_at')->count(),
+                            'expiringContracts' => \App\Models\Contract::when($agencyId, fn($q) => $q->where('agency_id', $agencyId))->where('status', 'active')->whereBetween('end_date', [now(), now()->addDays(30)])->count(),
                         ];
                     }) : [
                         'pendingPayments' => 0,

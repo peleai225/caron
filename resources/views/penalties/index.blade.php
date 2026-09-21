@@ -247,7 +247,7 @@
                     Marquer comme payée
                 </button>
             </form>
-            @role('super_admin')
+            @hasanyrole('super_admin|admin_agence')
             <form id="form-penalty-delete" method="POST" action="#" onsubmit="return confirm('Supprimer cette pénalité impayée ?')">
                 @csrf
                 @method('DELETE')
@@ -256,7 +256,7 @@
                     Supprimer cette pénalité
                 </button>
             </form>
-            @endrole
+            @endhasanyrole
         </div>
     </div>
 </div>
