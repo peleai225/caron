@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Creer un contrat')
-@section('page-title', 'Creer un contrat')
+@section('title', 'Créer un contrat')
+@section('page-title', 'Créer un contrat')
 
 @section('content')
 <div class="max-w-5xl mx-auto space-y-5">
@@ -32,7 +32,7 @@
                     </button>
                     <button type="button" data-section="section-4" class="section-nav flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left w-full text-xs font-medium transition-colors">
                         <span class="w-6 h-6 rounded-md bg-slate-200 text-slate-500 flex items-center justify-center text-[11px] font-bold flex-shrink-0">4</span>
-                        <span class="text-slate-500">Notes</span>
+                        <span class="text-slate-500">Modèle et notes</span>
                     </button>
                 </div>
             </nav>
@@ -44,9 +44,11 @@
                             <div>
                                 <label for="tenant_id" class="block text-xs font-medium text-slate-600 mb-1.5">Locataire <span class="text-red-500">*</span></label>
                                 <select id="tenant_id" name="tenant_id" required class="input-modern searchable-select">
-                                    <option value="">Selectionner...</option>
+                                    <option value="">Sélectionner...</option>
                                     @foreach($tenants as $tenant)
-                                        <option value="{{ $tenant->id }}" {{ old('tenant_id') == $tenant->id ? 'selected' : '' }}>{{ $tenant->full_name }} ({{ $tenant->phone }})</option>
+                                        <option value="{{ $tenant->id }}" {{ old('tenant_id') == $tenant->id ? 'selected' : '' }}>
+                                            {{ $tenant->full_name }} ({{ $tenant->phone }})
+                                        </option>
                                     @endforeach
                                 </select>
                                 @error('tenant_id')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
@@ -54,17 +56,20 @@
                             <div>
                                 <label for="property_id" class="block text-xs font-medium text-slate-600 mb-1.5">Bien immobilier <span class="text-red-500">*</span></label>
                                 <select id="property_id" name="property_id" required class="input-modern searchable-select">
-                                    <option value="">Selectionner...</option>
+                                    <option value="">Sélectionner...</option>
                                     @foreach($properties as $property)
-                                        <option value="{{ $property->id }}" {{ old('property_id', request('property_id')) == $property->id ? 'selected' : '' }}>{{ $property->name }} — {{ $property->city }}</option>
+                                        <option value="{{ $property->id }}" {{ old('property_id', request('property_id')) == $property->id ? 'selected' : '' }}>
+                                            {{ $property->full_address }}{{ $property->designation ? ' · ' . $property->designation : '' }} — {{ $property->city }}
+                                            ({{ $property->type ?? 'Bien' }})
+                                        </option>
                                     @endforeach
                                 </select>
                                 @error('property_id')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                             </div>
                             <div class="md:col-span-2">
-                                <label for="owner_id" class="block text-xs font-medium text-slate-600 mb-1.5">Proprietaire</label>
+                                <label for="owner_id" class="block text-xs font-medium text-slate-600 mb-1.5">Propriétaire</label>
                                 <select id="owner_id" name="owner_id" class="input-modern searchable-select">
-                                    <option value="">Selectionner (optionnel)...</option>
+                                    <option value="">Sélectionner (optionnel)...</option>
                                     @foreach($owners ?? [] as $owner)
                                         <option value="{{ $owner->id }}" {{ old('owner_id') == $owner->id ? 'selected' : '' }}>{{ $owner->name }}</option>
                                     @endforeach
@@ -88,16 +93,16 @@
                             </div>
                             <div>
                                 <label for="rent_amount" class="block text-xs font-medium text-slate-600 mb-1.5">Loyer (FCFA) <span class="text-red-500">*</span></label>
-                                <input type="number" id="rent_amount" name="rent_amount" required value="{{ old('rent_amount') }}" min="0" step="0.01" class="input-modern" placeholder="150000">
+                                <input type="number" id="rent_amount" name="rent_amount" required value="{{ old('rent_amount') }}" min="0" step="1" class="input-modern" placeholder="150000">
                                 @error('rent_amount')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                             </div>
                             <div>
                                 <label for="deposit" class="block text-xs font-medium text-slate-600 mb-1.5">Caution (FCFA)</label>
-                                <input type="number" id="deposit" name="deposit" value="{{ old('deposit') }}" min="0" step="0.01" class="input-modern" placeholder="300000">
+                                <input type="number" id="deposit" name="deposit" value="{{ old('deposit') }}" min="0" step="1" class="input-modern" placeholder="300000">
                                 @error('deposit')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                             </div>
                             <div>
-                                <label for="start_date" class="block text-xs font-medium text-slate-600 mb-1.5">Date de debut <span class="text-red-500">*</span></label>
+                                <label for="start_date" class="block text-xs font-medium text-slate-600 mb-1.5">Date de début <span class="text-red-500">*</span></label>
                                 <input type="date" id="start_date" name="start_date" required value="{{ old('start_date') }}" class="input-modern">
                                 @error('start_date')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                             </div>
@@ -112,7 +117,7 @@
                     <section id="section-3" class="section-content hidden">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label for="payment_frequency" class="block text-xs font-medium text-slate-600 mb-1.5">Frequence <span class="text-red-500">*</span></label>
+                                <label for="payment_frequency" class="block text-xs font-medium text-slate-600 mb-1.5">Fréquence <span class="text-red-500">*</span></label>
                                 <select id="payment_frequency" name="payment_frequency" required class="input-modern">
                                     <option value="monthly">Mensuel</option>
                                     <option value="quarterly">Trimestriel</option>
@@ -142,7 +147,7 @@
                             @endif
                             <div>
                                 <label for="notes" class="block text-xs font-medium text-slate-600 mb-1.5">Notes additionnelles</label>
-                                <textarea id="notes" name="notes" rows="5" class="input-modern" placeholder="Conditions speciales, clauses particulieres...">{{ old('notes') }}</textarea>
+                                <textarea id="notes" name="notes" rows="5" class="input-modern" placeholder="Conditions spéciales, clauses particulières...">{{ old('notes') }}</textarea>
                             </div>
                         </div>
                     </section>
@@ -151,9 +156,9 @@
                 <div class="flex items-center justify-between gap-3 px-5 py-4 border-t border-slate-100">
                     <a href="{{ route('contracts.index') }}" class="btn-secondary">Annuler</a>
                     <div class="flex gap-2">
-                        <button type="button" id="btn-prev" class="hidden btn-secondary">Precedent</button>
+                        <button type="button" id="btn-prev" class="hidden btn-secondary">Précédent</button>
                         <button type="button" id="btn-next" class="btn-secondary">Suivant</button>
-                        <button type="submit" id="btn-submit" class="hidden btn-primary">Creer le contrat</button>
+                        <button type="submit" id="btn-submit" class="hidden btn-primary">Créer le contrat</button>
                     </div>
                 </div>
             </div>

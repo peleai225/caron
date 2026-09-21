@@ -83,9 +83,7 @@ class ContractController extends Controller
 
         $contract = $this->contractService->createContract($validated);
 
-        // Mettre à jour le statut du bien
-        $property = Property::find($validated['property_id']);
-        $property->update(['status' => 'occupe']);
+        // Le bien reste libre tant que le contrat est en brouillon
 
         // Invalider le cache dashboard
         $this->forgetDashboardCache($validated['agency_id']);
@@ -133,13 +131,21 @@ class ContractController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        // Gérer signed_at si on passe à active
+        if ($validated['status'] === 'active' && !$contract->signed_at) {
+            $validated['signed_at'] = now();
+        }
+
         $contract->update($validated);
 
-        // Libérer le bien si le contrat est terminé/expiré et qu'il n'y a plus de contrat actif
-        if (in_array($validated['status'], ['terminated', 'expired'])) {
-            $property = $contract->property;
-            if ($property && !$property->contracts()->whereIn('status', ['draft', 'active'])->exists()) {
-                $property->update(['status' => 'libre']);
+        $property = $contract->property;
+        if ($property) {
+            if ($validated['status'] === 'active') {
+                $property->update(['status' => 'occupe']);
+            } elseif (in_array($validated['status'], ['terminated', 'expired'])) {
+                if (!$property->contracts()->whereIn('status', ['active'])->exists()) {
+                    $property->update(['status' => 'libre']);
+                }
             }
         }
 
