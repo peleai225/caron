@@ -181,6 +181,7 @@ class PenaltyController extends Controller
      */
     public function destroy(Penalty $penalty)
     {
+        abort_unless(auth()->user()->hasRole('super_admin'), 403, 'Seul le super administrateur peut supprimer une pénalité.');
         $agencyId = $this->requireAgencyId();
         abort_if(
             optional(optional($penalty->paymentSchedule)->contract)->agency_id !== $agencyId,

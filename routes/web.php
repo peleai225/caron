@@ -133,7 +133,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/penalties/{penalty}/edit', [PenaltyController::class, 'edit'])->name('penalties.edit');
         Route::put('/penalties/{penalty}', [PenaltyController::class, 'update'])->name('penalties.update');
         Route::put('/penalties/{penalty}/mark-as-paid', [PenaltyController::class, 'markAsPaid'])->name('penalties.mark-as-paid');
-        Route::delete('/penalties/{penalty}', [PenaltyController::class, 'destroy'])->name('penalties.destroy');
+        Route::delete('/penalties/{penalty}', [PenaltyController::class, 'destroy'])
+            ->middleware('role:super_admin')
+            ->name('penalties.destroy');
 
         // États des lieux
         Route::get('/etat-des-lieux', [EtatDesLieuxController::class, 'index'])->name('etat-des-lieux.index');

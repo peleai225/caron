@@ -247,6 +247,7 @@
                     Marquer comme payée
                 </button>
             </form>
+            @role('super_admin')
             <form id="form-penalty-delete" method="POST" action="#" onsubmit="return confirm('Supprimer cette pénalité impayée ?')">
                 @csrf
                 @method('DELETE')
@@ -255,6 +256,7 @@
                     Supprimer cette pénalité
                 </button>
             </form>
+            @endrole
         </div>
     </div>
 </div>
@@ -269,11 +271,16 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('pv-date').textContent        = btn.dataset.date || '—';
 
             var statusEl = document.getElementById('pv-status');
+            statusEl.textContent = '';
+            var badge = document.createElement('span');
             if (btn.dataset.status === 'paid') {
-                statusEl.innerHTML = '<span class="inline-flex items-center px-1.5 py-0.5 text-[11px] rounded-md font-medium ring-1 ring-inset bg-emerald-50 text-emerald-700 ring-emerald-600/20">Payée</span>';
+                badge.className = 'inline-flex items-center px-1.5 py-0.5 text-[11px] rounded-md font-medium ring-1 ring-inset bg-emerald-50 text-emerald-700 ring-emerald-600/20';
+                badge.textContent = 'Payée';
             } else {
-                statusEl.innerHTML = '<span class="inline-flex items-center px-1.5 py-0.5 text-[11px] rounded-md font-medium ring-1 ring-inset bg-red-50 text-red-700 ring-red-600/20">Impayée</span>';
+                badge.className = 'inline-flex items-center px-1.5 py-0.5 text-[11px] rounded-md font-medium ring-1 ring-inset bg-red-50 text-red-700 ring-red-600/20';
+                badge.textContent = 'Impayée';
             }
+            statusEl.appendChild(badge);
 
             var paidWrap = document.getElementById('pv-paid-at-wrap');
             if (btn.dataset.paidAt) {
