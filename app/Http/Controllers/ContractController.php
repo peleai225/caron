@@ -39,20 +39,21 @@ class ContractController extends Controller
     {
         $agencyId = $this->requireAgencyId();
         
-        $tenants = Tenant::where('agency_id', $agencyId)
+        $tenants = Tenant::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))
             ->where('status', 'actif')
+            ->orderBy('first_name')
             ->get();
 
-        $properties = Property::where('agency_id', $agencyId)
+        $properties = Property::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))
             ->where('status', 'libre')
             ->get();
 
-        $owners = Owner::where('agency_id', $agencyId)
+        $owners = Owner::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
 
-        $templates = ContractTemplate::where('agency_id', $agencyId)
+        $templates = ContractTemplate::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))
             ->where(function ($q) {
                 $q->where('is_active', true)->orWhere('is_default', true);
             })

@@ -172,52 +172,62 @@
     var rentInput   = document.getElementById('rent_amount');
     var propTimer   = null;
 
+    function fetchProperties(q) {
+        fetch('/contracts/search-properties?q=' + encodeURIComponent(q), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            propResults.textContent = '';
+            if (!data.length) {
+                var el = document.createElement('div');
+                el.className = 'px-4 py-3 text-xs text-slate-400';
+                el.textContent = 'Aucun bien disponible';
+                propResults.appendChild(el);
+                propResults.classList.remove('hidden');
+                return;
+            }
+            data.forEach(function (item) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full text-left px-4 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0';
+                var name = document.createElement('p');
+                name.className = 'text-xs font-semibold text-slate-900';
+                name.textContent = item.label;
+                var sub = document.createElement('p');
+                sub.className = 'text-[11px] text-slate-500';
+                sub.textContent = (item.type ?? '') + (item.monthly_rent ? ' · Loyer suggéré : ' + Number(item.monthly_rent).toLocaleString('fr-FR') + ' FCFA' : '');
+                btn.appendChild(name);
+                btn.appendChild(sub);
+                btn.addEventListener('click', function () {
+                    propHidden.value = item.id;
+                    propSearch.value = item.label;
+                    if (rentInput && item.monthly_rent) {
+                        rentInput.value = item.monthly_rent;
+                    }
+                    propResults.classList.add('hidden');
+                });
+                propResults.appendChild(btn);
+            });
+            propResults.classList.remove('hidden');
+        });
+    }
+
     if (propSearch) {
+        // Afficher les biens au focus (sans taper)
+        propSearch.addEventListener('focus', function () {
+            if (propResults.children.length === 0 || propResults.classList.contains('hidden')) {
+                fetchProperties(this.value.trim());
+            } else {
+                propResults.classList.remove('hidden');
+            }
+        });
+
         propSearch.addEventListener('input', function () {
             clearTimeout(propTimer);
             propHidden.value = '';
             var q = this.value.trim();
-            if (q.length < 2) { propResults.classList.add('hidden'); return; }
-            propTimer = setTimeout(function () {
-                fetch('/contracts/search-properties?q=' + encodeURIComponent(q), {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    propResults.textContent = '';
-                    if (!data.length) {
-                        var el = document.createElement('div');
-                        el.className = 'px-4 py-3 text-xs text-slate-400';
-                        el.textContent = 'Aucun bien disponible';
-                        propResults.appendChild(el);
-                        propResults.classList.remove('hidden');
-                        return;
-                    }
-                    data.forEach(function (item) {
-                        var btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'w-full text-left px-4 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0';
-                        var name = document.createElement('p');
-                        name.className = 'text-xs font-semibold text-slate-900';
-                        name.textContent = item.label;
-                        var sub = document.createElement('p');
-                        sub.className = 'text-[11px] text-slate-500';
-                        sub.textContent = (item.type ?? '') + (item.monthly_rent ? ' · Loyer suggéré : ' + Number(item.monthly_rent).toLocaleString('fr-FR') + ' FCFA' : '');
-                        btn.appendChild(name);
-                        btn.appendChild(sub);
-                        btn.addEventListener('click', function () {
-                            propHidden.value = item.id;
-                            propSearch.value = item.label;
-                            if (rentInput && item.monthly_rent) {
-                                rentInput.value = item.monthly_rent;
-                            }
-                            propResults.classList.add('hidden');
-                        });
-                        propResults.appendChild(btn);
-                    });
-                    propResults.classList.remove('hidden');
-                });
-            }, 300);
+            propTimer = setTimeout(function () { fetchProperties(q); }, 300);
         });
 
         document.addEventListener('click', function (e) {
@@ -225,6 +235,24 @@
                 propResults.classList.add('hidden');
             }
         });
+
+        // Pré-remplir le label si property_id est déjà défini (via URL ou old())
+        var prefilledId = propHidden.value ? parseInt(propHidden.value) : null;
+        if (prefilledId) {
+            fetch('/contracts/search-properties?q=', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var match = data.find(function (item) { return item.id === prefilledId; });
+                if (match) {
+                    propSearch.value = match.label;
+                    if (rentInput && !rentInput.value && match.monthly_rent) {
+                        rentInput.value = match.monthly_rent;
+                    }
+                }
+            });
+        }
     }
 
     // ── Navigation sections ───────────────────────────────────────────────
