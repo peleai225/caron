@@ -118,6 +118,28 @@ class InvoiceController extends Controller
         return response()->download($path);
     }
 
+    public function destroy(Invoice $invoice)
+    {
+        abort_unless(auth()->user()->hasRole('super_admin'), 403, 'Seul le super administrateur peut supprimer une facture.');
+
+        $agencyId = $invoice->contract?->agency_id;
+        if ($agencyId) {
+            $this->authorizeAgency($agencyId);
+        }
+
+        if ($invoice->pdf_path) {
+            $path = storage_path('app/public/invoices/' . $invoice->pdf_path);
+            if (file_exists($path)) {
+                unlink($path);
+            }
+        }
+
+        $invoice->delete();
+
+        return redirect()->route('invoices.index')
+            ->with('success', 'Facture supprimée.');
+    }
+
     private function generateInvoicePDF(Invoice $invoice): void
     {
         $pdf = Pdf::loadView('invoices.pdf', compact('invoice'));

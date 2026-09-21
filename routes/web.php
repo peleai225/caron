@@ -67,6 +67,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('tenants', TenantController::class);
         
         // Contracts
+        Route::get('/contracts/search-properties', [ContractController::class, 'searchProperties'])->name('contracts.search-properties');
         Route::resource('contracts', ContractController::class);
         Route::get('/contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
         Route::post('/contracts/{contract}/sign', [ContractController::class, 'sign'])->name('contracts.sign');
@@ -97,6 +98,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
         Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
         Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
+        Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])
+            ->middleware('role:super_admin')
+            ->name('invoices.destroy');
         
         // Document Templates
         Route::resource('document-templates', DocumentTemplateController::class);

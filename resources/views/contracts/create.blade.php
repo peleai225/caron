@@ -53,19 +53,16 @@
                                 </select>
                                 @error('tenant_id')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                             </div>
-                            <div>
-                                <label for="property_id" class="block text-xs font-medium text-slate-600 mb-1.5">Bien immobilier <span class="text-red-500">*</span></label>
-                                <select id="property_id" name="property_id" required class="input-modern searchable-select">
-                                    <option value="">Sélectionner...</option>
-                                    @foreach($properties as $property)
-                                        <option value="{{ $property->id }}" {{ old('property_id', request('property_id')) == $property->id ? 'selected' : '' }}>
-                                            {{ $property->full_address }}{{ $property->designation ? ' · ' . $property->designation : '' }} — {{ $property->city }}
-                                            ({{ $property->type ?? 'Bien' }})
-                                        </option>
-                                    @endforeach
-                                </select>
+
+                            {{-- Recherche AJAX bien disponible --}}
+                            <div class="relative" id="prop-search-wrap">
+                                <label class="block text-xs font-medium text-slate-600 mb-1.5">Bien immobilier <span class="text-red-500">*</span></label>
+                                <input type="text" id="prop-search" autocomplete="off" class="input-modern" placeholder="Rechercher par adresse, désignation, ville...">
+                                <input type="hidden" id="property_id" name="property_id" value="{{ old('property_id', request('property_id')) }}" required>
+                                <div id="prop-results" class="absolute z-30 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-56 overflow-y-auto hidden"></div>
                                 @error('property_id')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                             </div>
+
                             <div class="md:col-span-2">
                                 <label for="owner_id" class="block text-xs font-medium text-slate-600 mb-1.5">Propriétaire</label>
                                 <select id="owner_id" name="owner_id" class="input-modern searchable-select">
@@ -168,6 +165,69 @@
 
 <script>
 (function() {
+    // ── Recherche AJAX biens disponibles ──────────────────────────────────
+    var propSearch  = document.getElementById('prop-search');
+    var propHidden  = document.getElementById('property_id');
+    var propResults = document.getElementById('prop-results');
+    var rentInput   = document.getElementById('rent_amount');
+    var propTimer   = null;
+
+    if (propSearch) {
+        propSearch.addEventListener('input', function () {
+            clearTimeout(propTimer);
+            propHidden.value = '';
+            var q = this.value.trim();
+            if (q.length < 2) { propResults.classList.add('hidden'); return; }
+            propTimer = setTimeout(function () {
+                fetch('/contracts/search-properties?q=' + encodeURIComponent(q), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    propResults.textContent = '';
+                    if (!data.length) {
+                        var el = document.createElement('div');
+                        el.className = 'px-4 py-3 text-xs text-slate-400';
+                        el.textContent = 'Aucun bien disponible';
+                        propResults.appendChild(el);
+                        propResults.classList.remove('hidden');
+                        return;
+                    }
+                    data.forEach(function (item) {
+                        var btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'w-full text-left px-4 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0';
+                        var name = document.createElement('p');
+                        name.className = 'text-xs font-semibold text-slate-900';
+                        name.textContent = item.label;
+                        var sub = document.createElement('p');
+                        sub.className = 'text-[11px] text-slate-500';
+                        sub.textContent = (item.type ?? '') + (item.monthly_rent ? ' · Loyer suggéré : ' + Number(item.monthly_rent).toLocaleString('fr-FR') + ' FCFA' : '');
+                        btn.appendChild(name);
+                        btn.appendChild(sub);
+                        btn.addEventListener('click', function () {
+                            propHidden.value = item.id;
+                            propSearch.value = item.label;
+                            if (rentInput && item.monthly_rent) {
+                                rentInput.value = item.monthly_rent;
+                            }
+                            propResults.classList.add('hidden');
+                        });
+                        propResults.appendChild(btn);
+                    });
+                    propResults.classList.remove('hidden');
+                });
+            }, 300);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!document.getElementById('prop-search-wrap').contains(e.target)) {
+                propResults.classList.add('hidden');
+            }
+        });
+    }
+
+    // ── Navigation sections ───────────────────────────────────────────────
     const sections = ['section-1', 'section-2', 'section-3', 'section-4'];
     let currentIdx = 0;
 

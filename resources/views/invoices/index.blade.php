@@ -80,6 +80,12 @@
                             <div class="flex items-center justify-end gap-1">
                                 <a href="{{ route('invoices.show', $invoice) }}" class="px-2 py-1 text-xs font-medium text-primary-600 hover:bg-primary-50 rounded transition-colors">Voir</a>
                                 <a href="{{ route('invoices.download', $invoice) }}" class="px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded transition-colors">PDF</a>
+                                @role('super_admin')
+                                <form method="POST" action="{{ route('invoices.destroy', $invoice) }}" onsubmit="return confirm('Supprimer définitivement cette facture ?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 rounded transition-colors">Supprimer</button>
+                                </form>
+                                @endrole
                             </div>
                         </td>
                     </tr>

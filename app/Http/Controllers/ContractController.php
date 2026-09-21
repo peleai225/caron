@@ -188,6 +188,31 @@ class ContractController extends Controller
         return response()->download($path);
     }
 
+    public function searchProperties(Request $request)
+    {
+        $agencyId = $this->requireAgencyId();
+        $q = trim($request->get('q', ''));
+
+        $properties = Property::where('agency_id', $agencyId)
+            ->where('status', 'libre')
+            ->where(function ($query) use ($q) {
+                $query->where('address', 'like', "%{$q}%")
+                    ->orWhere('designation', 'like', "%{$q}%")
+                    ->orWhere('city', 'like', "%{$q}%")
+                    ->orWhere('neighborhood', 'like', "%{$q}%");
+            })
+            ->with('parent')
+            ->limit(15)
+            ->get();
+
+        return response()->json($properties->map(fn ($p) => [
+            'id'           => $p->id,
+            'label'        => $p->full_address . ($p->designation ? ' · ' . $p->designation : '') . ' — ' . $p->city,
+            'monthly_rent' => (int) $p->monthly_rent,
+            'type'         => $p->type,
+        ]));
+    }
+
     public function sign(Contract $contract)
     {
         $this->authorizeAgency($contract->agency_id);
