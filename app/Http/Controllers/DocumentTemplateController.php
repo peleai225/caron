@@ -26,9 +26,11 @@ class DocumentTemplateController extends Controller
         $agencyId = $this->requireAgencyId();
         
         $query = DocumentTemplate::query()
-            ->where(function($q) use ($agencyId) {
-                $q->where('agency_id', $agencyId)
-                  ->orWhereNull('agency_id'); // Templates système
+            ->where(function ($q) use ($agencyId) {
+                if ($agencyId) {
+                    $q->where('agency_id', $agencyId)->orWhereNull('agency_id');
+                }
+                // super_admin sans agency_id voit tous les templates
             });
 
         // Filtres

@@ -14,7 +14,7 @@ class EtatDesLieuxController extends Controller
         $agencyId = $this->requireAgencyId();
 
         $query = EtatDesLieux::with(['property', 'contract.tenant'])
-            ->whereHas('property', fn ($q) => $q->where('agency_id', $agencyId));
+            ->when($agencyId, fn ($q) => $q->whereHas('property', fn ($pq) => $pq->where('agency_id', $agencyId)));
 
         if ($request->filled('property_id')) {
             $query->where('property_id', $request->property_id);
@@ -24,7 +24,7 @@ class EtatDesLieuxController extends Controller
         }
 
         $etatDesLieux = $query->latest('date')->paginate(15);
-        $properties = Property::where('agency_id', $agencyId)->orderBy('address')->get();
+        $properties = Property::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))->orderBy('address')->get();
         $contracts = Contract::whereHas('property', fn ($q) => $q->where('agency_id', $agencyId))
             ->where('status', 'active')
             ->with(['property', 'tenant'])
@@ -40,11 +40,11 @@ class EtatDesLieuxController extends Controller
         $propertyId = $request->get('property_id');
         $contractId = $request->get('contract_id');
 
-        $property = $propertyId ? Property::where('agency_id', $agencyId)->findOrFail($propertyId) : null;
-        $contract = $contractId ? Contract::whereHas('property', fn ($q) => $q->where('agency_id', $agencyId))->findOrFail($contractId) : null;
+        $property = $propertyId ? Property::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))->findOrFail($propertyId) : null;
+        $contract = $contractId ? Contract::when($agencyId, fn ($q) => $q->whereHas('property', fn ($pq) => $pq->where('agency_id', $agencyId)))->findOrFail($contractId) : null;
 
-        $properties = Property::where('agency_id', $agencyId)->orderBy('address')->get();
-        $contracts = $contract ? collect([$contract]) : Contract::whereHas('property', fn ($q) => $q->where('agency_id', $agencyId))->where('status', 'active')->with(['property', 'tenant'])->get();
+        $properties = Property::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))->orderBy('address')->get();
+        $contracts = $contract ? collect([$contract]) : Contract::when($agencyId, fn ($q) => $q->whereHas('property', fn ($pq) => $pq->where('agency_id', $agencyId)))->where('status', 'active')->with(['property', 'tenant'])->get();
 
         return view('etat-des-lieux.create', compact('properties', 'contracts', 'property', 'contract'));
     }

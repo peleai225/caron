@@ -14,9 +14,7 @@ class InvoiceController extends Controller
         $agencyId = $this->requireAgencyId();
         
         $query = Invoice::with(['contract.tenant', 'contract.property'])
-            ->whereHas('contract', function($q) use ($agencyId) {
-                $q->where('agency_id', $agencyId);
-            });
+            ->when($agencyId, fn ($q) => $q->whereHas('contract', fn ($cq) => $cq->where('agency_id', $agencyId)));
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -32,23 +30,11 @@ class InvoiceController extends Controller
 
         $invoices = $query->latest('issue_date')->paginate(15);
 
-        // Statistiques
+        $baseQuery = fn () => Invoice::when($agencyId, fn ($q) => $q->whereHas('contract', fn ($cq) => $cq->where('agency_id', $agencyId)));
         $stats = [
-            'total_pending' => Invoice::whereHas('contract', function($q) use ($agencyId) {
-                $q->where('agency_id', $agencyId);
-            })
-            ->where('status', 'pending')
-            ->sum('amount'),
-            'total_paid' => Invoice::whereHas('contract', function($q) use ($agencyId) {
-                $q->where('agency_id', $agencyId);
-            })
-            ->where('status', 'paid')
-            ->sum('amount'),
-            'total_overdue' => Invoice::whereHas('contract', function($q) use ($agencyId) {
-                $q->where('agency_id', $agencyId);
-            })
-            ->where('status', 'overdue')
-            ->sum('amount'),
+            'total_pending' => $baseQuery()->where('status', 'pending')->sum('amount'),
+            'total_paid'    => $baseQuery()->where('status', 'paid')->sum('amount'),
+            'total_overdue' => $baseQuery()->where('status', 'overdue')->sum('amount'),
         ];
 
         return view('invoices.index', compact('invoices', 'stats'));
@@ -57,7 +43,7 @@ class InvoiceController extends Controller
     public function create()
     {
         $agencyId = $this->requireAgencyId();
-        $contracts = Contract::where('agency_id', $agencyId)
+        $contracts = Contract::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))
             ->where('status', 'active')
             ->with(['tenant', 'property'])
             ->get();

@@ -15,16 +15,10 @@ class ActivityLogController extends Controller
         $agencyId = $this->requireAgencyId();
         
         $query = Activity::query()
-            ->where(function($q) use ($agencyId) {
-                // Pour Property, Tenant, Contract qui ont directement agency_id
-                $q->whereHasMorph('subject', ['App\Models\Property', 'App\Models\Tenant', 'App\Models\Contract'], function ($subQ) use ($agencyId) {
-                    $subQ->where('agency_id', $agencyId);
-                })
-                // Pour Payment qui est lié via Contract
-                ->orWhereHasMorph('subject', ['App\Models\Payment'], function ($subQ) use ($agencyId) {
-                    $subQ->whereHas('contract', function ($contractQ) use ($agencyId) {
-                        $contractQ->where('agency_id', $agencyId);
-                    });
+            ->when($agencyId, function ($q) use ($agencyId) {
+                $q->where(function ($inner) use ($agencyId) {
+                    $inner->whereHasMorph('subject', ['App\Models\Property', 'App\Models\Tenant', 'App\Models\Contract'], fn ($subQ) => $subQ->where('agency_id', $agencyId))
+                        ->orWhereHasMorph('subject', ['App\Models\Payment'], fn ($subQ) => $subQ->whereHas('contract', fn ($cq) => $cq->where('agency_id', $agencyId)));
                 });
             });
 

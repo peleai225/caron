@@ -144,7 +144,7 @@ class ExpenseController extends Controller
         $agencyId = $this->requireAgencyId();
 
         $query = Expense::with(['property'])
-            ->where('agency_id', $agencyId);
+            ->when($agencyId, fn ($q) => $q->where('agency_id', $agencyId));
 
         $this->applyExpenseFilters($query, $request);
 
@@ -218,7 +218,7 @@ class ExpenseController extends Controller
         $agencyId = $this->requireAgencyId();
 
         $query = Expense::with(['property'])
-            ->where('agency_id', $agencyId);
+            ->when($agencyId, fn ($q) => $q->where('agency_id', $agencyId));
 
         $this->applyExpenseFilters($query, $request);
 

@@ -13,9 +13,7 @@ class TransactionController extends Controller
         $agencyId = $this->requireAgencyId();
         
         $query = Transaction::with(['account', 'payment'])
-            ->whereHas('account', function($q) use ($agencyId) {
-                $q->where('agency_id', $agencyId);
-            });
+            ->when($agencyId, fn ($q) => $q->whereHas('account', fn ($aq) => $aq->where('agency_id', $agencyId)));
 
         if ($request->filled('account_id')) {
             $query->where('account_id', $request->account_id);
@@ -38,22 +36,12 @@ class TransactionController extends Controller
         }
 
         $transactions = $query->latest('transaction_date')->paginate(20);
-        $accounts = Account::where('agency_id', $agencyId)->get();
+        $accounts = Account::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))->get();
 
-        // Statistiques
+        $baseQuery = fn () => Transaction::when($agencyId, fn ($q) => $q->whereHas('account', fn ($aq) => $aq->where('agency_id', $agencyId)));
         $stats = [
-            'total_income' => Transaction::whereHas('account', function($q) use ($agencyId) {
-                $q->where('agency_id', $agencyId);
-            })
-            ->where('type', 'income')
-            ->where('status', 'completed')
-            ->sum('amount'),
-            'total_expense' => Transaction::whereHas('account', function($q) use ($agencyId) {
-                $q->where('agency_id', $agencyId);
-            })
-            ->where('type', 'expense')
-            ->where('status', 'completed')
-            ->sum('amount'),
+            'total_income'  => $baseQuery()->where('type', 'income')->where('status', 'completed')->sum('amount'),
+            'total_expense' => $baseQuery()->where('type', 'expense')->where('status', 'completed')->sum('amount'),
         ];
 
         return view('transactions.index', compact('transactions', 'accounts', 'stats'));

@@ -20,7 +20,7 @@ class LitigeController extends Controller
         $agencyId = $this->requireAgencyId();
 
         $query = Litige::with(['contract', 'tenant', 'property', 'owner'])
-            ->where('agency_id', $agencyId);
+            ->when($agencyId, fn ($q) => $q->where('agency_id', $agencyId));
 
         if ($request->filled('statut')) {
             $query->where('statut', $request->statut);
@@ -39,7 +39,7 @@ class LitigeController extends Controller
         }
 
         $litiges = $query->latest('date_debut')->paginate(15);
-        $owners = Owner::where('agency_id', $agencyId)->orderBy('name')->get();
+        $owners = Owner::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))->orderBy('name')->get();
 
         return view('litiges.index', compact('litiges', 'owners'));
     }
@@ -48,13 +48,13 @@ class LitigeController extends Controller
     {
         $agencyId = $this->requireAgencyId();
 
-        $contracts = Contract::where('agency_id', $agencyId)
+        $contracts = Contract::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))
             ->where('status', 'active')
             ->with(['tenant', 'property', 'owner'])
             ->get();
-        $tenants = Tenant::where('agency_id', $agencyId)->orderBy('first_name')->get();
-        $properties = Property::where('agency_id', $agencyId)->orderBy('address')->get();
-        $owners = Owner::where('agency_id', $agencyId)->orderBy('name')->get();
+        $tenants = Tenant::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))->orderBy('first_name')->get();
+        $properties = Property::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))->orderBy('address')->get();
+        $owners = Owner::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))->orderBy('name')->get();
 
         return view('litiges.create', compact('contracts', 'tenants', 'properties', 'owners'));
     }
@@ -104,9 +104,7 @@ class LitigeController extends Controller
     public function show(Litige $litige)
     {
         $agencyId = $this->requireAgencyId();
-        if ($litige->agency_id !== $agencyId) {
-            abort(403, 'Accès non autorisé.');
-        }
+        $this->authorizeAgency($litige->agency_id);
         $litige->load(['contract.tenant', 'contract.property', 'tenant', 'property', 'owner']);
         return view('litiges.show', compact('litige'));
     }
@@ -114,23 +112,19 @@ class LitigeController extends Controller
     public function edit(Litige $litige)
     {
         $agencyId = $this->requireAgencyId();
-        if ($litige->agency_id !== $agencyId) {
-            abort(403, 'Accès non autorisé.');
-        }
+        $this->authorizeAgency($litige->agency_id);
         $agencyId = $this->requireAgencyId();
         $contracts = Contract::where('agency_id', $agencyId)->where('status', 'active')->with(['tenant', 'property', 'owner'])->get();
         $tenants = Tenant::where('agency_id', $agencyId)->orderBy('first_name')->get();
         $properties = Property::where('agency_id', $agencyId)->orderBy('address')->get();
-        $owners = Owner::where('agency_id', $agencyId)->orderBy('name')->get();
+        $owners = Owner::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))->orderBy('name')->get();
         return view('litiges.edit', compact('litige', 'contracts', 'tenants', 'properties', 'owners'));
     }
 
     public function update(Request $request, Litige $litige)
     {
         $agencyId = $this->requireAgencyId();
-        if ($litige->agency_id !== $agencyId) {
-            abort(403, 'Accès non autorisé.');
-        }
+        $this->authorizeAgency($litige->agency_id);
 
         $validated = $request->validate([
             'contract_id' => 'nullable|exists:contracts,id',
@@ -173,9 +167,7 @@ class LitigeController extends Controller
     public function destroy(Litige $litige)
     {
         $agencyId = $this->requireAgencyId();
-        if ($litige->agency_id !== $agencyId) {
-            abort(403, 'Accès non autorisé.');
-        }
+        $this->authorizeAgency($litige->agency_id);
         $litige->delete();
         return redirect()->route('litiges.index')->with('success', 'Litige supprimé.');
     }
@@ -185,7 +177,7 @@ class LitigeController extends Controller
         $agencyId = $this->requireAgencyId();
 
         $query = Litige::with(['contract', 'tenant', 'property', 'owner'])
-            ->where('agency_id', $agencyId);
+            ->when($agencyId, fn ($q) => $q->where('agency_id', $agencyId));
 
         if ($request->filled('date_debut')) {
             $query->where(function ($q) use ($request) {
@@ -204,7 +196,7 @@ class LitigeController extends Controller
         }
 
         $litiges = $query->orderBy('date_debut')->get();
-        $owners = Owner::where('agency_id', $agencyId)->orderBy('name')->get();
+        $owners = Owner::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))->orderBy('name')->get();
 
         return view('litiges.rapport', compact('litiges', 'owners'));
     }
@@ -213,7 +205,7 @@ class LitigeController extends Controller
     {
         $agencyId = $this->requireAgencyId();
         $query = Litige::with(['contract', 'tenant', 'property', 'owner'])
-            ->where('agency_id', $agencyId);
+            ->when($agencyId, fn ($q) => $q->where('agency_id', $agencyId));
         if ($request->filled('date_debut')) {
             $query->where('date_debut', '>=', $request->date_debut);
         }
@@ -265,7 +257,7 @@ class LitigeController extends Controller
     {
         $agencyId = $this->requireAgencyId();
         $query = Litige::with(['contract', 'tenant', 'property', 'owner'])
-            ->where('agency_id', $agencyId);
+            ->when($agencyId, fn ($q) => $q->where('agency_id', $agencyId));
         if ($request->filled('date_debut')) {
             $query->where('date_debut', '>=', $request->date_debut);
         }
@@ -285,7 +277,7 @@ class LitigeController extends Controller
     {
         $agencyId = $this->requireAgencyId();
         $query = Litige::with(['contract', 'tenant', 'property', 'owner'])
-            ->where('agency_id', $agencyId);
+            ->when($agencyId, fn ($q) => $q->where('agency_id', $agencyId));
         if ($request->filled('date_debut')) {
             $query->where('date_debut', '>=', $request->date_debut);
         }
