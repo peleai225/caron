@@ -45,7 +45,7 @@ class ContractController extends Controller
             ->get();
 
         $properties = Property::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))
-            ->where('status', 'libre')
+            ->whereIn('status', ['libre', 'maintenance'])
             ->get();
 
         $owners = Owner::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))
@@ -195,7 +195,7 @@ class ContractController extends Controller
         $q = trim($request->get('q', ''));
 
         $properties = Property::when($agencyId, fn ($q) => $q->where('agency_id', $agencyId))
-            ->where('status', 'libre')
+            ->whereIn('status', ['libre', 'maintenance'])
             ->where(function ($query) use ($q) {
                 $query->where('address', 'like', "%{$q}%")
                     ->orWhere('designation', 'like', "%{$q}%")
