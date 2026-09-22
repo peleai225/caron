@@ -200,10 +200,15 @@ class ContractController extends Controller
                 $query->where('address', 'like', "%{$q}%")
                     ->orWhere('designation', 'like', "%{$q}%")
                     ->orWhere('city', 'like', "%{$q}%")
-                    ->orWhere('neighborhood', 'like', "%{$q}%");
+                    ->orWhere('neighborhood', 'like', "%{$q}%")
+                    ->orWhereHas('parent', function ($pq) use ($q) {
+                        $pq->where('address', 'like', "%{$q}%")
+                           ->orWhere('designation', 'like', "%{$q}%")
+                           ->orWhere('neighborhood', 'like', "%{$q}%");
+                    });
             })
             ->with('parent')
-            ->limit(15)
+            ->limit(20)
             ->get();
 
         return response()->json($properties->map(fn ($p) => [
